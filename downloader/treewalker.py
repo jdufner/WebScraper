@@ -44,7 +44,8 @@ class Treewalker:
         links_len: int = len(links)
         index: int = 1
         for link in links:
-            logging.debug(f'link ({index}/{links_len}) href = {link.get('href')}')
+            href: str = link.get('href')
+            logging.debug(f'link ({index}/{links_len}) href = {href}')
 
         # links = self.browser.find_elements(By.XPATH, '//a[@href]')
         # links_len: int = len(links)
@@ -65,6 +66,13 @@ class Treewalker:
         timeout: int = 1
         try:
             self.browser.switch_to.default_content()
+            scroll_position: int = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
+            logging.debug(f'scroll position before scrolling = {scroll_position}')
+            scroll_height: int = self.browser.execute_script("return document.body.scrollHeight")
+            logging.debug(f'scroll height = {scroll_height}')
+            self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            scroll_position: int = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
+            logging.debug(f'scroll position after scrolling = {scroll_position}')
             element_present = EC.presence_of_element_located(
                 (By.CSS_SELECTOR, 'html body div.container div footer.text-center a'))
             web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_present)
@@ -82,9 +90,10 @@ class Treewalker:
             buttons = self.browser.find_elements(By.CSS_SELECTOR, 'button[title="Zustimmen"]')  # type: list[WebElement]
             for button in buttons:
                 inner_html: str = button.get_attribute("innerHTML")
+                title: str = button.get_attribute('title')
                 logging.debug(f'button id = {button.id}, '
                               f'innerHTML = {inner_html}, '
-                              f'title = {button.get_attribute('title')}, displayed = {button.is_displayed()}, '
+                              f'title = {title}, displayed = {button.is_displayed()}, '
                               f'enabled = {button.is_enabled()}')
                 if button.is_displayed():
                     button.click()

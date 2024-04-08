@@ -1,0 +1,48 @@
+@startuml
+
+hide circle
+skinparam linetype ortho
+
+entity document {
+    id: UUID <<generated>>
+    --
+    * url: varchar(1000)
+    * downloaded_at: timestamp
+    * content: text
+    published_at: timestamp
+}
+
+entity links {
+    id: UUID <<generated>
+    --
+    * parent_document: UUID <<FK>>
+    * url: varchar(1000)
+}
+
+entity pics {
+    id: UUID <<generated>>
+    --
+    * parent_document: UUID <<FK>>
+    * url: varchar(1000)
+    size: integer
+    width: integer
+    height: integer
+    filename: varchar(1000)
+}
+
+entity blacklist {
+    id: UUID
+    --
+    * hostname: varchar(100)
+}
+
+entity whitelist {
+    id: UUID
+    --
+    * hostname: varchar(100)
+}
+
+document ||--o{ links
+document ||--o{ pics
+
+@enduml

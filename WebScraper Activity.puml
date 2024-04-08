@@ -1,0 +1,30 @@
+@startuml
+
+title Web Scraper
+
+start
+repeat
+partition Download {
+    :Get URL in Selenium;
+    :Click cookie consent if present;
+    :Scroll down to end of page;
+    :Get HTML content into BeautifulSoup;
+}
+
+partition Extraction {
+    :Extract publish date of webpage;
+    :Extract (URL of) links;
+    :Extract (URL of) pics;
+}
+
+partition Save {
+    :Save document, links, and pics in database\n(pics not yet downloaded);
+}
+
+partition Prepare Next {
+    :Find next URL which isn't blacklisted;
+}
+repeatwhile (less than 100 pages downloaded)
+end
+
+@enduml

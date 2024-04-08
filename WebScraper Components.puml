@@ -1,0 +1,25 @@
+@startuml
+
+package "WebScraper" {
+    [Web Scraper] as ws
+    [Image Downloader] as id
+}
+
+Website <.. ws: http(s)
+Website <.. id: http(s)
+
+database "PostgreSQL" {
+    [document]
+    [links]
+    [pics]
+    [blacklist]
+}
+
+ws ..> [document]
+ws ..> [links]
+ws ..> [pics]
+ws ..> [blacklist]
+id ..> [pics]
+id ..> [blacklist]
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+
+title Image Downloader
+
+start
+repeat
+partition Read Pics From Database {
+    :Read not yet downloaded pic from database;
+}
+
+partition Download Pics {
+    :Download pic via command line tool;
+    :Get size and dimensions from pics;
+}
+
+partition Update Database {
+    :Update size, dimensions, and filename;
+}
+
+repeatwhile (no pic to download)
+end
+
+@enduml
