@@ -3,7 +3,12 @@
 title Web Scraper
 
 start
+partition Initialize {
+    :Open browser;
+}
+
 repeat
+
 partition Download {
     :Get URL in Selenium;
     :Click cookie consent if present;
@@ -24,7 +29,13 @@ partition Save {
 partition Prepare Next {
     :Find next URL which isn't blacklisted;
 }
+
 repeatwhile (less than 100 pages downloaded)
+
+partition Terminate {
+    :Close browser;
+}
+
 end
 
 @enduml
