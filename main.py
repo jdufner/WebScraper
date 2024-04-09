@@ -15,4 +15,4 @@ if __name__ == '__main__':
                         datefmt='%Y-%m-%d %H:%M:%S', level=logging.DEBUG)
     logging.info("Los geht's")
     t: treewalker.Treewalker = treewalker.Treewalker()
-    t.open()
+    t.open('http://www.heise.de/')

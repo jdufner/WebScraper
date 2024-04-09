@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
+from bs4 import ResultSet
+
 
 
 class Treewalker:
@@ -17,9 +19,8 @@ class Treewalker:
         logging.debug('')
         self.browser = webdriver.Chrome()
 
-    def open(self):
-        url: str = 'http://www.heise.de/'
-        logging.info(f'Load {url}')
+    def open(self, url: str) -> None:
+        logging.info(f'Open {url}')
         self.browser.get(url)
         timeout: int = 3  # seconds
         time.sleep(timeout)
@@ -32,35 +33,32 @@ class Treewalker:
             if not loaded:
                 loaded = self.loaded()
 
-        self.find_links()
+        soup: BeautifulSoup = self.get_and_parse_html_source()
+        self.find_links(soup)
+        self.extract_pics(soup)
 
         time.sleep(timeout)
         self.browser.quit()
 
-    def find_links(self) -> None:
-        html_source_code = self.browser.execute_script("return document.body.innerHTML;")
+    def get_and_parse_html_source(self) -> BeautifulSoup:
+        html_source_code = self.browser.execute_script('return document.body.innerHTML;')
         soup: BeautifulSoup = BeautifulSoup(html_source_code, 'html.parser')
-        links = soup.find_all('a')
-        links_len: int = len(links)
-        index: int = 1
-        for link in links:
-            href: str = link.get('href')
-            logging.debug(f'link ({index}/{links_len}) href = {href}')
+        return soup
 
-        # links = self.browser.find_elements(By.XPATH, '//a[@href]')
-        # links_len: int = len(links)
-        # logging.debug(f'links number = {links_len}')
-        # index: int = 1
-        # for link in links:
-        #     try:
-        #         logging.debug(f'link ({index}/{links_len}), innerHTML = {link.get_attribute('innerHTML')}, '
-        #                       f'href = {link.get_attribute('href')}')
-        #     except StaleElementReferenceException:
-        #         logging.error(f'Element {link.id} not found!')
-        #     except TimeoutException:
-        #         logging.error(f'Element {link.id} not found!')
-        #     finally:
-        #         index += 1
+    @staticmethod
+    def find_links(soup: BeautifulSoup) -> list[str]:
+        a_elements: ResultSet = soup.find_all('a')
+        number_a_elements: int = len(a_elements)
+        index: int = 1
+        links: list[str] = []
+        for a_element in a_elements:
+            href: str = a_element.get('href')
+            links.append(href)
+            logging.debug(f'link ({index}/{number_a_elements}) href = {href}')
+        return links
+
+    def extract_pics(self, soup: BeautifulSoup) -> None:
+        pass
 
     def loaded(self) -> bool:
         timeout: int = 1
