@@ -78,7 +78,7 @@ class Downloader:
     def __wait_until_cookies_consented_and_page_loaded(self):
         loaded: bool = False
         cookies_consented: bool = False
-        for _ in range(3):
+        for _ in range(1):
             if not cookies_consented:
                 cookies_consented = self.__consent_cookies()
             if not loaded:
@@ -109,7 +109,7 @@ class Downloader:
                       f'windows_height / window.innerHeight = {window_height}, '
                       f'scroll_position = {scroll_position}, '
                       f'scroll_height / document.body.scrollHeight = {scroll_height}')
-        while scroll_position < 0.999 * scroll_height and index <= 100:
+        while scroll_position < 0.99 * (scroll_height - window_height) and index <= 100:
             self.browser.execute_script(f'window.scrollTo(0, {index * window_height});')
             time.sleep(timeout)
             scroll_position = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
@@ -121,6 +121,12 @@ class Downloader:
             logging.debug(f'index = {index}, '
                           f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
                           f'scroll_height / document.body.scrollHeight = {scroll_height}')
+        logging.info(f'index = {index}, '
+                     f'window_height / window.innerHeight = {window_height}, '
+                     f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
+                     f'scroll_height / document.body.scrollHeight = {scroll_height}, '
+                     f'scroll_position < 0.99 * (scroll_height - window_height) = {scroll_position < 0.99 * 
+                                                                                   (scroll_height - window_height)}')
         self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def __consent_cookies(self) -> bool:
