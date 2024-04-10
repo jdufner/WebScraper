@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 import logging
 import os
@@ -12,5 +13,27 @@ if __name__ == '__main__':
                         encoding='utf-8',
                         format='%(asctime)s,%(msecs)-3d - %(levelname)-8s - %(filename)s:%(lineno)d - '
                                '%(module)s - %(funcName)s - %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
-    Walker().walk('http://www.heise.de/', 100)
+                        datefmt='%Y-%m-%d %H:%M:%S', level=logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-bl', '--blacklist', type=str, default='blacklist.txt',
+                        help='Name of the file containing black listed URL that will not be visited.')
+    parser.add_argument('-pl', '--print_links', default=False, action='store_true')
+    parser.add_argument('-pi', '--print_images', default=False, action='store_true')
+    parser.add_argument('-ll', '--log_level', choices=['debug', 'info', 'warning', 'error', 'critical'],
+                        default='info', help='Log level for log file.')
+    parser.add_argument('-lp', '--log_path', type=str, default='./logs',
+                        help='Path to write log file.')
+    parser.add_argument('url', type=str, default='http://www.heise.de/',
+                        help='URL where to start scraping.')
+    parser.add_argument('number_pages', type=int, default=10,
+                        help='Number to be scraped, a value smaller than 0 means infinite scraping.')
+    args = parser.parse_args()
+    logging.debug(f'url = {args.url} '
+                  f'number_pages = {args.number_pages} '
+                  f'--blacklist = {args.blacklist} '
+                  f'--print_links = {args.print_links} '
+                  f'--print_images = {args.print_images} '
+                  f'--log_level = {args.log_level} '
+                  f'logging.level = {logging.getLevelNamesMapping()[args.log_level.upper()]} '
+                  f'--log_path = {args.log_path}')
+    Walker().walk(args.url, args.number_pages)
