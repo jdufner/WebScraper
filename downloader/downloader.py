@@ -29,7 +29,7 @@ class Downloader:
         logging.info(f'Open {url}')
         self.url: str = url
         self.browser.get(url)
-        timeout: int = 1  # seconds
+        timeout: float = 1.0  # seconds
         time.sleep(timeout)
         self.__wait_until_cookies_consented_and_page_loaded()
         self.__get_and_parse_html_source()
@@ -37,15 +37,6 @@ class Downloader:
         self.__find_links()
         self.__extract_images()
         return self.__build_document()
-
-    def __wait_until_cookies_consented_and_page_loaded(self):
-        loaded: bool = False
-        cookies_consented: bool = False
-        for _ in range(5):
-            if not cookies_consented:
-                cookies_consented = self.__consent_cookies()
-            if not loaded:
-                loaded = self.__check_page_fully_loaded()
 
     def __get_and_parse_html_source(self) -> None:
         self.html_source_code = self.browser.execute_script('return document.body.innerHTML;')
@@ -84,25 +75,53 @@ class Downloader:
                 logging.debug(f'img ({index}/{number_img_elements}) src = {src}')
                 index += 1
 
+    def __wait_until_cookies_consented_and_page_loaded(self):
+        loaded: bool = False
+        cookies_consented: bool = False
+        for _ in range(3):
+            if not cookies_consented:
+                cookies_consented = self.__consent_cookies()
+            if not loaded:
+                loaded = self.__check_page_fully_loaded()
+
     def __check_page_fully_loaded(self) -> bool:
-        timeout: float = 1.0
+        timeout: float = 3.0
         try:
             self.browser.switch_to.default_content()
-            scroll_position: int = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
-            logging.debug(f'scroll position before scrolling = {scroll_position}')
-            scroll_height: int = self.browser.execute_script("return document.body.scrollHeight")
-            logging.debug(f'scroll height = {scroll_height}')
-            self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            scroll_position: int = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
-            logging.debug(f'scroll position after scrolling = {scroll_position}')
-            element_present = EC.presence_of_element_located(
-                (By.CSS_SELECTOR, 'html body div.container div footer.text-center a'))
+            self.__scroll_down_page_by_page()
+            element_present = EC.presence_of_element_located((By.CSS_SELECTOR, 'html body div div footer'))
             web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_present)
-            logging.info(f'Web_element {web_element.get_attribute("innerHTML")} present!')
+            # element_visible = EC.visibility_of_element_located((By.CSS_SELECTOR, 'html body div div footer'))
+            # web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_visible)
+            logging.info(f'Web_element present!')
             return True
         except TimeoutException:
             logging.info("Loading took too much time!")
             return False
+
+    def __scroll_down_page_by_page(self):
+        timeout: float = 0.3  # seconds
+        window_height: int = int(self.browser.execute_script("return window.innerHeight"))
+        scroll_position: int = 0
+        scroll_height: int = int(self.browser.execute_script("return document.body.scrollHeight"))
+        index: int = 1
+        logging.debug(f'index = {index}, '
+                      f'windows_height / window.innerHeight = {window_height}, '
+                      f'scroll_position = {scroll_position}, '
+                      f'scroll_height / document.body.scrollHeight = {scroll_height}')
+        while scroll_position < 0.999 * scroll_height and index <= 100:
+            self.browser.execute_script(f'window.scrollTo(0, {index * window_height});')
+            time.sleep(timeout)
+            scroll_position = int(self.browser.execute_script("return window.pageYOffset + window.innerHeight"))
+            new_scroll_height = int(self.browser.execute_script("return document.body.scrollHeight"))
+            if new_scroll_height > scroll_height:
+                index = -1
+                scroll_height = new_scroll_height
+            index += 1
+            logging.debug(f'index = {index}, '
+                          f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
+                          f'scroll_height / document.body.scrollHeight = {scroll_height}')
+        self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def __consent_cookies(self) -> bool:
         try:
@@ -119,7 +138,7 @@ class Downloader:
                               f'enabled = {button.is_enabled()}')
                 if button.is_displayed():
                     button.click()
-                    logging.info(f'Button {inner_html} clicked!')
+                    logging.info(f'Button clicked!')
             return True
         except NoSuchFrameException:
             logging.info("No cookie consent found!")

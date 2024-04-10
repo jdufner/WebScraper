@@ -1,10 +1,16 @@
 @startuml
 
 package "WebScraper" {
+    [Walker] as w
     [Web Scraper] as ws
+    [Blacklist] as bl
     [Image Downloader] as id
 }
 
+w ..> ws
+ws .> bl
+id ..> bl
+'ws -> id
 Website <.. ws: http(s)
 Website <.. id: http(s)
 
@@ -18,8 +24,8 @@ database "PostgreSQL" {
 ws ..> [document]
 ws ..> [links]
 ws ..> [pics]
-ws ..> [blacklist]
+bl ..> [blacklist]
 id ..> [pics]
-id ..> [blacklist]
+'id ..> [blacklist]
 
 @enduml

@@ -13,4 +13,4 @@ if __name__ == '__main__':
                         format='%(asctime)s,%(msecs)-3d - %(levelname)-8s - %(filename)s:%(lineno)d - '
                                '%(module)s - %(funcName)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
-    Walker().walk('http://www.heise.de/', 50)
+    Walker().walk('http://www.heise.de/', 10)
