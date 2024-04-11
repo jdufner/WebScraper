@@ -1,3 +1,5 @@
+from argparse import Namespace
+
 from bs4 import BeautifulSoup
 from bs4 import ResultSet
 from datetime import datetime
@@ -16,8 +18,8 @@ from urllib.parse import ParseResult
 
 
 class Downloader:
-    def __init__(self, browser: WebDriver):
-        # logging.debug('')
+    def __init__(self, args: Namespace, browser: WebDriver):
+        self.args = args
         self.browser: WebDriver = browser
         self.url = None
         self.html_source_code = None
@@ -60,6 +62,8 @@ class Downloader:
             if self.__filter_url(href) != '':
                 self.links.append(href)
                 logging.debug(f'link ({index}/{number_a_elements}) href = {href}')
+                if self.args.print_links:
+                    print(href)
                 index += 1
 
     def __extract_images(self) -> None:
@@ -73,6 +77,8 @@ class Downloader:
             if self.__filter_url(src) != '':
                 self.image_urls.append(src)
                 logging.debug(f'img ({index}/{number_img_elements}) src = {src}')
+                if self.args.print_images:
+                    print(src)
                 index += 1
 
     def __wait_until_cookies_consented_and_page_loaded(self):
@@ -125,8 +131,8 @@ class Downloader:
                      f'window_height / window.innerHeight = {window_height}, '
                      f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
                      f'scroll_height / document.body.scrollHeight = {scroll_height}, '
-                     f'scroll_position < 0.99 * (scroll_height - window_height) = {scroll_position < 0.99 * 
-                                                                                   (scroll_height - window_height)}')
+                     f'scroll_position < 0.99 * (scroll_height - window_height) = '
+                     f'{scroll_position < 0.99 * (scroll_height - window_height)}')
         self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def __consent_cookies(self) -> bool:

@@ -1,4 +1,5 @@
 import logging
+from argparse import Namespace
 
 from downloader.blacklist import Blacklist
 from downloader.document import Document
@@ -10,14 +11,15 @@ from urllib.parse import ParseResult
 
 
 class Walker:
-    def __init__(self) -> None:
+    def __init__(self, args: Namespace) -> None:
+        self.args = args
         self.browser: WebDriver = webdriver.Chrome()
         self.blacklist: Blacklist = Blacklist()
         self.already_downloaded_documents = []
         self.to_be_downloaded_documents = []
 
     def walk(self, url: str, number_pages: int) -> None:
-        document: Document = Downloader(self.browser).open(url)
+        document: Document = Downloader(self.args, self.browser).open(url)
         self.already_downloaded_documents.append(document.url)
         self.to_be_downloaded_documents.extend(document.links)
         for index in range(number_pages):  # type index: int
