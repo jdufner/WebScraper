@@ -24,6 +24,9 @@ class Downloader:
         self.url = None
         self.html_source_code = None
         self.soup = None
+        self.downloaded_at = datetime.now()
+        self.created_at = []
+        self.creators = []
         self.links = []
         self.image_urls = []
 
@@ -35,7 +38,8 @@ class Downloader:
         time.sleep(timeout)
         self.__wait_until_cookies_consented_and_page_loaded()
         self.__get_and_parse_html_source()
-        self.__find_published_at()
+        self.__find_created_at()
+        self.__find_creators()
         self.__find_links()
         self.__extract_images()
         return self.__build_document()
@@ -44,12 +48,19 @@ class Downloader:
         self.html_source_code = self.browser.execute_script('return document.body.innerHTML;')
         self.soup: BeautifulSoup = BeautifulSoup(self.html_source_code, 'html.parser')
 
-    def __find_published_at(self):
-        time_elements: ResultSet = self.soup.css.select('div.a-publish-info time')
-        for time_element in time_elements:
-            logging.debug(time_element.get('datetime'))
-            # self.published_at = time_element.get('datetime')
-            break
+    def __find_created_at(self):
+        if self.url.endswith('.html'):
+            time_elements: ResultSet = self.soup.css.select('div.a-publish-info time[datetime]')
+            for time_element in time_elements:
+                logging.debug(f'created at {time_element.get("datetime")}')
+                self.created_at.append(time_element.get("datetime"))
+
+    def __find_creators(self):
+        if self.url.endswith('.html'):
+            creator_elements: ResultSet = self.soup.css.select('div.creator ul li')
+            for creator_element in creator_elements:
+                logging.debug(f'created by {creator_element.getText()}')
+                self.creators.append(creator_element.getText())
 
     def __find_links(self) -> None:
         a_elements: ResultSet = self.soup.find_all('a')
@@ -127,12 +138,12 @@ class Downloader:
             logging.debug(f'index = {index}, '
                           f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
                           f'scroll_height / document.body.scrollHeight = {scroll_height}')
-        logging.info(f'index = {index}, '
-                     f'window_height / window.innerHeight = {window_height}, '
-                     f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
-                     f'scroll_height / document.body.scrollHeight = {scroll_height}, '
-                     f'scroll_position < 0.99 * (scroll_height - window_height) = '
-                     f'{scroll_position < 0.99 * (scroll_height - window_height)}')
+        # logging.info(f'index = {index}, '
+        #              f'window_height / window.innerHeight = {window_height}, '
+        #              f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
+        #              f'scroll_height / document.body.scrollHeight = {scroll_height}, '
+        #              f'scroll_position < 0.99 * (scroll_height - window_height) = '
+        #              f'{scroll_position < 0.99 * (scroll_height - window_height)}')
         self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def __consent_cookies(self) -> bool:
@@ -153,16 +164,17 @@ class Downloader:
                     logging.info(f'Button clicked!')
             return True
         except NoSuchFrameException:
-            logging.info("No cookie consent found!")
+            logging.warning("No cookie consent found!")
             return True
         except TimeoutException:
-            logging.info("No cookie consent found!")
+            logging.warning("Cookie consent expected, but not found!")
             return False
         finally:
             self.browser.switch_to.default_content()
 
     def __build_document(self) -> Document:
-        return Document(self.url, self.html_source_code, datetime.now(), self.links, self.image_urls)
+        return Document(self.url, self.html_source_code, self.downloaded_at, self.created_at, self.creators,
+                        self.links, self.image_urls)
 
     @staticmethod
     def __build_url(base_url, url_or_path: str) -> str:
