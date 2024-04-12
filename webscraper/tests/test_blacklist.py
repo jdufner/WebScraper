@@ -1,5 +1,5 @@
 import unittest
-from downloader.blacklist import Blacklist
+from webscraper.blacklist import Blacklist
 
 
 class BlacklistTestCase(unittest.TestCase):

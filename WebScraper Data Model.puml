@@ -9,7 +9,8 @@ entity document {
     * url: varchar(1000)
     * downloaded_at: timestamp
     * content: text
-    published_at: timestamp
+    created_at: timestamp
+    created_by: varchar(100)
 }
 
 entity links {
@@ -36,11 +37,6 @@ entity blacklist {
     * hostname: varchar(100)
 }
 
-entity whitelist {
-    id: UUID
-    --
-    * hostname: varchar(100)
-}
 
 document ||--o{ links
 document ||--o{ pics

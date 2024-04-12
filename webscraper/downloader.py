@@ -3,7 +3,7 @@ from argparse import Namespace
 from bs4 import BeautifulSoup
 from bs4 import ResultSet
 from datetime import datetime
-from downloader.document import Document
+from webscraper.document import Document
 import logging
 from selenium.common.exceptions import NoSuchFrameException
 from selenium.common.exceptions import TimeoutException

@@ -1,9 +1,9 @@
 import logging
 from argparse import Namespace
 
-from downloader.blacklist import Blacklist
-from downloader.document import Document
-from downloader.downloader import Downloader
+from webscraper.blacklist import Blacklist
+from webscraper.document import Document
+from webscraper.downloader import Downloader
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
 from urllib import parse

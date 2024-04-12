@@ -3,7 +3,7 @@ from argparse import Namespace
 from datetime import datetime
 import logging
 import os
-from downloader.walker import Walker
+from webscraper.walker import Walker
 
 
 def __parse_arguments() -> Namespace:
