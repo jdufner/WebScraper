@@ -4,15 +4,11 @@ from urllib.parse import ParseResult
 
 
 class Blacklist:
-    def __init__(self) -> None:
-        if os.path.exists('blacklist.txt'):
-            # with open('blacklist.txt') as file:
-            #     self.lines = [line.rstrip() for line in file]
-            self.blacks: list[ParseResult] = []
-            with open('blacklist.txt') as file:
-                for line in file:
-                    parsed_line: ParseResult = parse.urlparse(line.rstrip())
-                    self.blacks.append(parsed_line)
+    def __init__(self, urls: list[str]) -> None:
+        self.blacks: list[ParseResult] = []
+        for url in urls:
+            parsed_line: ParseResult = parse.urlparse(url)
+            self.blacks.append(parsed_line)
 
     def is_listed(self, url) -> bool:
         parsed_url = parse.urlparse(url)
@@ -20,4 +16,3 @@ class Blacklist:
             if parsed_url.netloc == black_url.netloc and parsed_url.path.startswith(black_url.path):
                 return True
         return False
-

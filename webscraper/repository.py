@@ -1,3 +1,4 @@
+import json
 import time
 from abc import abstractmethod
 from datetime import datetime
@@ -9,10 +10,10 @@ from webscraper.document import Document
 
 
 class Repository:
-    def __init__(self) -> None:
+    def __init__(self, config: dict) -> None:
+        self.config = config
         self.con = None
         self.cursor = None
-        pass
 
     def __del__(self) -> None:
         self.con.close()
@@ -67,9 +68,9 @@ class Repository:
 
 
 class SqliteRepository(Repository):
-    def __init__(self):
-        super().__init__()
-        self.con = sqlite3.connect(':memory:')
+    def __init__(self, config: dict):
+        super().__init__(config)
+        self.con = sqlite3.connect(self.config["database"]["url"])
         self.cursor = self.con.cursor()
 
     def create_tables(self):
@@ -98,9 +99,11 @@ class SqliteRepository(Repository):
 
 
 class PostgresqlRepository(Repository):
-    def __init__(self):
-        super().__init__()
-        self.con = psycopg.connect(dbname='', user='', password='')
+    def __init__(self, config: dict):
+        super().__init__(config)
+        self.con = psycopg.connect(dbname=(self.config["database"]["url"]),
+                                   user=(self.config["database"]["username"]),
+                                   password=(self.config["database"]["password"]))
         self.cursor = self.con.cursor()
 
     def create_tables(self):
@@ -143,13 +146,15 @@ class PostgresqlRepository(Repository):
 
 
 def init_sqlite() -> Repository:
-    r: Repository = SqliteRepository()
+    config = json.load(open('../config-heise.json'))
+    r: Repository = SqliteRepository(config)
     r.create_tables()
     return r
 
 
 def init_postgresql() -> Repository:
-    r: Repository = PostgresqlRepository()
+    config = json.load(open('../config-hot.json'))
+    r: Repository = PostgresqlRepository(config)
     # r.create_tables()
     return r
 

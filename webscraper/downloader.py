@@ -1,9 +1,6 @@
-from argparse import Namespace
-
 from bs4 import BeautifulSoup
 from bs4 import ResultSet
 from datetime import datetime
-from webscraper.document import Document
 import logging
 from selenium.common.exceptions import NoSuchFrameException
 from selenium.common.exceptions import TimeoutException
@@ -15,11 +12,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 import time
 from urllib import parse
 from urllib.parse import ParseResult
+from webscraper.document import Document
 
 
 class Downloader:
-    def __init__(self, args: Namespace, browser: WebDriver):
-        self.args = args
+    def __init__(self, config: dict, browser: WebDriver):
+        self.config = config
         self.browser: WebDriver = browser
         self.url = None
         self.html_source_code = None
@@ -73,7 +71,7 @@ class Downloader:
             if self.__filter_url(href) != '':
                 self.links.append(href)
                 logging.debug(f'link ({index}/{number_a_elements}) href = {href}')
-                if self.args.print_links:
+                if self.config["print-links"].lower() == 'true':
                     print(href)
                 index += 1
 
@@ -88,7 +86,7 @@ class Downloader:
             if self.__filter_url(src) != '':
                 self.image_urls.append(src)
                 logging.debug(f'img ({index}/{number_img_elements}) src = {src}')
-                if self.args.print_images:
+                if self.config["print-images"].lower() == 'true':
                     print(src)
                 index += 1
 
