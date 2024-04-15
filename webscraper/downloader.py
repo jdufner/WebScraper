@@ -68,7 +68,10 @@ class Downloader:
         for a_element in a_elements:
             href: str = a_element.get('href')
             href = self.__build_url(self.url, href)
-            if self.__filter_url(href) != '':
+            if href is not None and self.__filter_url(href) != '':
+                if len(href) > 1000:
+                    logging.warning(f'URL is bigger than 1000 chars {href}')
+                    break
                 self.links.append(href)
                 logging.debug(f'link ({index}/{number_a_elements}) href = {href}')
                 if self.config["print-links"].lower() == 'true':
@@ -83,7 +86,10 @@ class Downloader:
         for img_element in img_elements:
             src: str = img_element.get('src')
             src = self.__build_url(self.url, src)
-            if self.__filter_url(src) != '':
+            if src is not None and self.__filter_url(src) != '':
+                if len(src) > 1000:
+                    logging.warning(f'URL is bigger than 1000 chars {src}')
+                    break
                 self.image_urls.append(src)
                 logging.debug(f'img ({index}/{number_img_elements}) src = {src}')
                 if self.config["print-images"].lower() == 'true':

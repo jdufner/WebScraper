@@ -1,11 +1,8 @@
-import json
-import time
 from abc import abstractmethod
 from datetime import datetime
-import sqlite3
-
+import json
 import psycopg
-
+import sqlite3
 from webscraper.document import Document
 
 
@@ -22,16 +19,9 @@ class Repository:
     def create_tables(self):
         pass
 
+    @abstractmethod
     def save_document(self, document: Document):
-        self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
-                            '(?, ?, ?, ?, ?)',
-                            (document.url, document.content, document.downloaded_at, document.created_ad[0],
-                             document.creators[0]))
-        document_id: int = self.cursor.lastrowid
-        self.cursor.executemany('INSERT INTO links (document_id, url) VALUES (:document_id, :url)',
-                                self.document_to_link_dict(document, document_id))
-        self.cursor.executemany('INSERT INTO images (document_id, url) VALUES (:document_id, :url)',
-                                self.document_to_images_dict(document, document_id))
+        pass
 
     def get_all(self):
         cur = self.cursor.execute('SELECT * FROM documents d, links l, images i WHERE d.id = l.document_id and d.id = '
@@ -97,6 +87,17 @@ class SqliteRepository(Repository):
             height INTEGER
         )''')
 
+    def save_document(self, document: Document):
+        self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
+                            '(?, ?, ?, ?, ?)',
+                            (document.url, document.content, document.downloaded_at, document.created_ad[0],
+                             document.creators[0]))
+        document_id: int = self.cursor.lastrowid
+        self.cursor.executemany('INSERT INTO links (document_id, url) VALUES (:document_id, :url)',
+                                self.document_to_link_dict(document, document_id))
+        self.cursor.executemany('INSERT INTO images (document_id, url) VALUES (:document_id, :url)',
+                                self.document_to_images_dict(document, document_id))
+
 
 class PostgresqlRepository(Repository):
     def __init__(self, config: dict):
@@ -135,8 +136,8 @@ class PostgresqlRepository(Repository):
     def save_document(self, document: Document):
         self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
                             '(%s, %s, %s, %s, %s) RETURNING id',
-                            (document.url, document.content, document.downloaded_at, document.created_ad[0],
-                             document.creators[0]))
+                            (document.url, document.content, document.downloaded_at, document.created_at_or_none(),
+                             document.created_by_as_string()))
         document_id: int = self.cursor.fetchone()[0]
         self.cursor.executemany('INSERT INTO links (document_id, url) VALUES (%s, %s)',
                                 super().document_to_link_list(document, document_id))

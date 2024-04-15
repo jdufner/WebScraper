@@ -1,11 +1,13 @@
 import logging
-from webscraper.blacklist import Blacklist
-from webscraper.document import Document
-from webscraper.downloader import Downloader
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
 from urllib import parse
 from urllib.parse import ParseResult
+from webscraper.blacklist import Blacklist
+from webscraper.document import Document
+from webscraper.downloader import Downloader
+from webscraper.repository import PostgresqlRepository
+from webscraper.repository import Repository
 
 
 class Walker:
@@ -13,11 +15,13 @@ class Walker:
         self.config: dict = config
         self.browser: WebDriver = webdriver.Chrome()
         self.blacklist: Blacklist = Blacklist(config["blacklist"])
+        self.repository: Repository = PostgresqlRepository(self.config)
         self.already_downloaded_documents = []
         self.to_be_downloaded_documents = []
 
     def walk(self, url: str, number_pages: int) -> None:
         document: Document = Downloader(self.config, self.browser).open(url)
+        self.repository.save_document(document)
         self.already_downloaded_documents.append(document.url)
         self.to_be_downloaded_documents.extend(document.links)
         for index in range(number_pages):  # type index: int
@@ -27,6 +31,7 @@ class Walker:
                          f'{self.to_be_downloaded_documents}')
             url: str = self.__get_next_url()
             document: Document = Downloader(self.config, self.browser).open(url)
+            self.repository.save_document(document)
             self.already_downloaded_documents.append(url)
             self.__append_links_to_to_be_downloaded(document.links)
             # self.to_be_downloaded_documents.extend(document.links)

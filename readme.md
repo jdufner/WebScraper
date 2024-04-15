@@ -10,7 +10,7 @@
 
 ### Install From Scratch
 
-    py -m pip install bs4 selenium psycopg
+    py -m pip install bs4 selenium psycopg[binary]
 
 ### Create Dependencies File
 
