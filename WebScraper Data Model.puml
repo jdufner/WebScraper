@@ -14,7 +14,7 @@ entity document {
 }
 
 entity links {
-    id: UUID <<generated>
+    id: UUID <<generated>>
     --
     * parent_document: UUID <<FK>>
     * url: varchar(1000)
@@ -29,12 +29,6 @@ entity pics {
     width: integer
     height: integer
     filename: varchar(1000)
-}
-
-entity blacklist {
-    id: UUID
-    --
-    * hostname: varchar(100)
 }
 
 
