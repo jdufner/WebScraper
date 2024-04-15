@@ -110,7 +110,7 @@ class Downloader:
         try:
             self.browser.switch_to.default_content()
             self.__scroll_down_page_by_page()
-            element_present = EC.presence_of_element_located((By.CSS_SELECTOR, 'html body div div footer'))
+            element_present = EC.presence_of_element_located((By.CSS_SELECTOR, self.config["download"]["footer"]))
             web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_present)
             # element_visible = EC.visibility_of_element_located((By.CSS_SELECTOR, 'html body div div footer'))
             # web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_visible)
@@ -154,7 +154,7 @@ class Downloader:
         try:
             self.browser.switch_to.frame(self.browser.switch_to.active_element)
             logging.debug(f'browser title = {self.browser.title}')
-            self.browser.get_screenshot_as_file(f'./logs/pics/screenshot_{datetime.now(): %Y-%m-%d_%Hh%Mm%Ss}.png')
+            # self.browser.get_screenshot_as_file(f'./logs/pics/screenshot_{datetime.now(): %Y-%m-%d_%Hh%Mm%Ss}.png')
             buttons = self.browser.find_elements(By.CSS_SELECTOR, 'button[title="Zustimmen"]')  # type: list[WebElement]
             for button in buttons:
                 inner_html: str = button.get_attribute("innerHTML")
