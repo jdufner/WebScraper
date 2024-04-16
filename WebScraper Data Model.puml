@@ -3,7 +3,7 @@
 hide circle
 skinparam linetype ortho
 
-entity document {
+entity documents {
     id: UUID <<generated>>
     --
     * url: varchar(1000)
@@ -16,23 +16,37 @@ entity document {
 entity links {
     id: UUID <<generated>>
     --
-    * parent_document: UUID <<FK>>
-    * url: varchar(1000)
+    * url: varchar(1000) <<UNIQUE INDEX>>
 }
 
-entity pics {
+entity documents_to_links {
     id: UUID <<generated>>
     --
-    * parent_document: UUID <<FK>>
-    * url: varchar(1000)
+    * document_id: UUID <<FK>>
+    * link_id: UUID <<FK>>
+}
+
+entity images {
+    id: UUID <<generated>>
+    --
+    * url: varchar(1000) <<UNIQUE INDEX>>
     size: integer
     width: integer
     height: integer
     filename: varchar(1000)
 }
 
+entity documents_to_images {
+    id: UUID <<generated>>
+    --
+    * document_id: UUID <<FK>>
+    * image_id: UUID <<FK>>
+}
 
-document ||--o{ links
-document ||--o{ pics
+
+documents ||--o{ documents_to_links
+documents_to_links }|--|| links
+documents ||--o{ documents_to_images
+documents_to_images }|--|| images
 
 @enduml

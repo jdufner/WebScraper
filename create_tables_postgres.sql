@@ -11,17 +11,31 @@ CREATE TABLE documents (
 );
 CREATE TABLE links (
     id SERIAL PRIMARY KEY,
-    document_id INTEGER NOT NULL,
     url VARCHAR(1000) NOT NULL,
-    CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id)
 );
-CREATE TABLE images (
+CREATE UNIQUE INDEX idx_links_url ON links(url);
+CREATE TABLE documents_to_links (
     id SERIAL PRIMARY KEY,
     document_id INTEGER NOT NULL,
+    link_id INTEGER NOT NULL,
+    CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id),
+    CONSTRAINT fk_link FOREIGN KEY (link_id) REFERENCES links(id)
+);
+CREATE UNIQUE INDEX idx_document_links on documents_to_links(document_id, link_id);
+CREATE TABLE images (
+    id SERIAL PRIMARY KEY,
     url VARCHAR(1000) NOT NULL,
     filename VARCHAR(1000),
     size INTEGER,
     width INTEGER,
     height INTEGER,
-    CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id)
 );
+CREATE UNIQUE INDEX idx_images_url ON images(url);
+CREATE TABLE documents_to_images (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER NOT NULL,
+    image_id INTEGER NOT NULL,
+    CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id),
+    CONSTRAINT fk_image FOREIGN KEY (image_id) REFERENCES images(id)
+);
+CREATE UNIQUE INDEX idx_document_images on documents_to_images(document_id, image_id);

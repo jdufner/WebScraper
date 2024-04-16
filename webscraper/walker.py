@@ -7,6 +7,7 @@ from webscraper.blacklist import Blacklist
 from webscraper.document import Document
 from webscraper.downloader import Downloader
 from webscraper.repository import PostgresqlRepository
+from webscraper.repository import SqliteRepository
 from webscraper.repository import Repository
 
 
@@ -15,7 +16,10 @@ class Walker:
         self.config: dict = config
         self.browser: WebDriver = webdriver.Chrome()
         self.blacklist: Blacklist = Blacklist(config["blacklist"])
-        self.repository: Repository = PostgresqlRepository(self.config)
+        if config["database"]["url"].lower() == 'postgres':
+            self.repository: Repository = PostgresqlRepository(self.config)
+        else:
+            self.repository: Repository = SqliteRepository(self.config)
         self.already_downloaded_documents = []
         self.to_be_downloaded_documents = []
 
