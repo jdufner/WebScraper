@@ -26,7 +26,7 @@ if __name__ == '__main__':
     now: datetime = datetime.now()
     if not os.path.exists(config["logging"]["path"]):
         os.makedirs(config["logging"]["path"])
-    logging.basicConfig(filename=f'{config["logging"]["path"]}/{now: %Y-%m-%d_%Hh%Mm%Ss}.log',
+    logging.basicConfig(filename=f'{config["logging"]["path"]}/{now: %Y-%m-%d_%Hh%Mm%Ss}_main.log',
                         encoding='utf-8',
                         format='%(asctime)s,%(msecs)-3d - %(levelname)-8s - %(filename)s:%(lineno)d - '
                                '%(module)s - %(funcName)s - %(message)s',

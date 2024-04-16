@@ -23,6 +23,35 @@ class Repository:
     def save_document(self, document: Document):
         pass
 
+    def get_next_link(self) -> tuple[int, str]:
+        self.cursor.execute('SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url '
+                            'WHERE d.id IS NULL AND (l.downloaded = FALSE OR l.downloaded IS NULL) AND '
+                            '(l.skip = FALSE OR l.skip IS NULL) ORDER BY l.id ASC')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_link_downloaded(self, link_url: str) -> None:
+        self.cursor.execute('UPDATE links SET downloaded = TRUE WHERE url = %s', (link_url,))
+        self.con.commit()
+
+    def set_link_skip(self, link_id: int) -> None:
+        self.cursor.execute('UPDATE links SET skip = TRUE WHERE id = %s', (link_id,))
+        self.con.commit()
+
+    def get_next_image_url(self) -> tuple[int, str]:
+        self.cursor.execute('SELECT i.id, i.url FROM images i WHERE (i.downloaded = FALSE OR i.downloaded IS NULL) AND '
+                            '(i.skip = FALSE or i.skip IS NULL) ORDER BY i.id ASC')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_image_downloaded(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET downloaded = TRUE WHERE id = %s', (image_id,))
+        self.con.commit()
+
+    def set_image_skip(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET skip = TRUE WHERE id = %s', (image_id,))
+        self.con.commit()
+
     def get_all(self):
         cur = self.cursor.execute('SELECT * FROM documents d, documents_to_links dl, links l, documents_to_images di, '
                                   'images i WHERE d.id = dl.document_id and dl.link_id = l.id and '

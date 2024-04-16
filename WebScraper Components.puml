@@ -2,14 +2,13 @@
 
 package "WebScraper" {
     [Walker] as w
-    [Web Scraper] as ws
-    [Blacklist] as bl
+    [Downloader] as ws
     [Image Downloader] as id
+    [Repository] as r
 }
 
 w ..> ws
-ws .> bl
-id ..> bl
+ws ..> r
 'ws -> id
 Website <.. ws: http(s)
 Website <.. id: http(s)
@@ -17,15 +16,11 @@ Website <.. id: http(s)
 database "PostgreSQL" {
     [document]
     [links]
-    [pics]
-    [blacklist]
+    [images]
 }
 
-ws ..> [document]
-ws ..> [links]
-ws ..> [pics]
-bl ..> [blacklist]
-id ..> [pics]
-'id ..> [blacklist]
+r ..> [document]
+r ..> [links]
+r ..> [images]
 
 @enduml
