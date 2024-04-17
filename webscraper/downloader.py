@@ -23,6 +23,7 @@ class Downloader:
         self.html_source_code = None
         self.soup = None
         self.downloaded_at = datetime.now()
+        self.title = ''
         self.created_at = []
         self.creators = []
         self.links = []
@@ -36,6 +37,7 @@ class Downloader:
         time.sleep(timeout)
         self.__wait_until_cookies_consented_and_page_loaded()
         self.__get_and_parse_html_source()
+        self.__find_first_title()
         self.__find_created_at()
         self.__find_creators()
         self.__find_links()
@@ -46,14 +48,21 @@ class Downloader:
         self.html_source_code = self.browser.execute_script('return document.body.innerHTML;')
         self.soup: BeautifulSoup = BeautifulSoup(self.html_source_code, 'html.parser')
 
-    def __find_created_at(self):
+    def __find_first_title(self) -> None:
+        title_elements: ResultSet = self.soup.css.select('html head title')
+        for title_element in title_elements:
+            logging.debug(f'title of page {title_element.getText()}')
+            self.title = title_element
+            break
+
+    def __find_created_at(self) -> None:
         if self.url.endswith('.html'):
             time_elements: ResultSet = self.soup.css.select('div.a-publish-info time[datetime]')
             for time_element in time_elements:
                 logging.debug(f'created at {time_element.get("datetime")}')
                 self.created_at.append(time_element.get("datetime"))
 
-    def __find_creators(self):
+    def __find_creators(self) -> None:
         if self.url.endswith('.html'):
             creator_elements: ResultSet = self.soup.css.select('div.creator ul li')
             for creator_element in creator_elements:
@@ -64,11 +73,12 @@ class Downloader:
         a_elements: ResultSet = self.soup.find_all('a')
         number_a_elements: int = len(a_elements)
         index: int = 1
-        # self.links: list[str] = []
         for a_element in a_elements:
             href: str = a_element.get('href')
             href = self.__build_url(self.url, href)
             if href is not None and self.__filter_url(href) != '':
+                if self.config["download"]["remove-parameter-query-fragment-from-url"].lower() == "true":
+                    href = self.__remove_query_and_fragment(href)
                 if len(href) > 1000:
                     logging.warning(f'URL is bigger than 1000 chars {href}')
                     break
@@ -142,12 +152,6 @@ class Downloader:
             logging.debug(f'index = {index}, '
                           f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
                           f'scroll_height / document.body.scrollHeight = {scroll_height}')
-        # logging.info(f'index = {index}, '
-        #              f'window_height / window.innerHeight = {window_height}, '
-        #              f'scroll_position / windowYOffset + window.innerHeight = {scroll_position}, '
-        #              f'scroll_height / document.body.scrollHeight = {scroll_height}, '
-        #              f'scroll_position < 0.99 * (scroll_height - window_height) = '
-        #              f'{scroll_position < 0.99 * (scroll_height - window_height)}')
         self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def __consent_cookies(self) -> bool:
@@ -177,7 +181,7 @@ class Downloader:
             self.browser.switch_to.default_content()
 
     def __build_document(self) -> Document:
-        return Document(self.url, self.html_source_code, self.downloaded_at, self.created_at, self.creators,
+        return Document(self.url, self.html_source_code, self.title, self.downloaded_at, self.created_at, self.creators,
                         self.links, self.image_urls)
 
     @staticmethod
@@ -188,6 +192,15 @@ class Downloader:
             url: str = parse.urljoin(base_url, url_or_path)
             return url
         return url_or_path
+
+    @staticmethod
+    def __remove_query_and_fragment(url: str) -> str:
+        parsed_url: ParseResult = parse.urlparse(url)
+        if parsed_url.params != '' or parsed_url.query != '' or parsed_url.fragment != '':
+            new_url: str = parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
+            logging.warning(f'Remove parameter, query, and fragment from url {url} to {new_url}')
+            return new_url
+        return url
 
     @staticmethod
     def __filter_url(url) -> str:

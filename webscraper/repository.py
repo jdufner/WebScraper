@@ -23,39 +23,34 @@ class Repository:
     def save_document(self, document: Document):
         pass
 
+    @abstractmethod
     def get_next_link(self) -> tuple[int, str]:
-        self.cursor.execute('SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url '
-                            'WHERE d.id IS NULL AND (l.downloaded = FALSE OR l.downloaded IS NULL) AND '
-                            '(l.skip = FALSE OR l.skip IS NULL) ORDER BY l.id ASC')
-        result = self.cursor.fetchone()
-        return int(result[0]), str(result[1])
+        pass
 
+    @abstractmethod
     def set_link_downloaded(self, link_url: str) -> None:
-        self.cursor.execute('UPDATE links SET downloaded = TRUE WHERE url = %s', (link_url,))
-        self.con.commit()
+        pass
 
+    @abstractmethod
     def set_link_skip(self, link_id: int) -> None:
-        self.cursor.execute('UPDATE links SET skip = TRUE WHERE id = %s', (link_id,))
-        self.con.commit()
+        pass
 
+    @abstractmethod
     def get_next_image_url(self) -> tuple[int, str]:
-        self.cursor.execute('SELECT i.id, i.url FROM images i WHERE (i.downloaded = FALSE OR i.downloaded IS NULL) AND '
-                            '(i.skip = FALSE or i.skip IS NULL) ORDER BY i.id ASC')
-        result = self.cursor.fetchone()
-        return int(result[0]), str(result[1])
+        pass
 
+    @abstractmethod
     def set_image_downloaded(self, image_id: int) -> None:
-        self.cursor.execute('UPDATE images SET downloaded = TRUE WHERE id = %s', (image_id,))
-        self.con.commit()
+        pass
 
+    @abstractmethod
     def set_image_skip(self, image_id: int) -> None:
-        self.cursor.execute('UPDATE images SET skip = TRUE WHERE id = %s', (image_id,))
-        self.con.commit()
+        pass
 
     def get_all(self):
-        cur = self.cursor.execute('SELECT * FROM documents d, documents_to_links dl, links l, documents_to_images di, '
-                                  'images i WHERE d.id = dl.document_id and dl.link_id = l.id and '
-                                  'd.id = di.document_id and di.image_id = i.id')
+        cur = self.cursor.execute('SELECT d.url, dl.id, dl.document_id, dl.link_id, l.url '
+                                  'FROM documents d, documents_to_links dl, links l '
+                                  'WHERE d.id = dl.document_id and dl.link_id = l.id ')
         print(cur.fetchall())
 
     @staticmethod
@@ -90,15 +85,20 @@ class Repository:
 class SqliteRepository(Repository):
     def __init__(self, config: dict):
         super().__init__(config)
-        self.con = sqlite3.connect(self.config["database"]["url"])
+        if self.config["database"]["type"].lower() == "in-memory":
+            self.con = sqlite3.connect(self.config["database"]["in-memory"]["url"])
+        else:
+            self.con = sqlite3.connect(self.config["database"]["sqlite3"]["url"])
         self.cursor = self.con.cursor()
         self.create_tables()
 
     def create_tables(self):
-        # self.cursor.execute('''DROP TABLE images''')
-        # self.cursor.execute('''DROP TABLE links''')
-        # self.cursor.execute('''DROP TABLE documents''')
-        self.cursor.execute('''CREATE TABLE documents (
+        # self.cursor.execute('''DROP TABLE IF EXISTS documents_to_images''')
+        # self.cursor.execute('''DROP TABLE IF EXISTS images''')
+        # self.cursor.execute('''DROP TABLE IF EXISTS documents_to_links''')
+        # self.cursor.execute('''DROP TABLE IF EXISTS links''')
+        # self.cursor.execute('''DROP TABLE IF EXISTS documents''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL,
             content TEXT NOT NULL,
@@ -106,36 +106,46 @@ class SqliteRepository(Repository):
             created_at DATETIME,
             created_by VARCHAR(100)
         )''')
-        self.cursor.execute('''CREATE TABLE links (
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url VARCHAR(1000) NOT NULL
+            url VARCHAR(1000) NOT NULL UNIQUE,
+            skip INTEGER DEFAULT 0,
+            downloaded INTEGER DEFAULT 0
         )''')
-        self.cursor.execute('''CREATE TABLE documents_to_links (
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_links ON links(url)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents_to_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             document_id INTEGER NOT NULL,
-            link_ID INTEGER NOT NULL
+            link_id INTEGER NOT NULL
         )''')
-        self.cursor.execute('''CREATE TABLE images (
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_links ON 
+                            documents_to_links(document_id, link_id)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url VARCHAR(1000) NOT NULL,
+            url VARCHAR(1000) NOT NULL UNIQUE,
             filename VARCHAR(1000),
             size INTEGER,
             width INTEGER,
-            height INTEGER
+            height INTEGER,
+            skip INTEGER DEFAULT 0,
+            downloaded INTEGER DEFAULT 0
         )''')
-        self.cursor.execute('''CREATE TABLE documents_to_images (
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_images_url ON images(url)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents_to_images (
            id INTEGER PRIMARY KEY AUTOINCREMENT,
             document_id INTEGER NOT NULL,
             image_id INTEGER NOT NULL
         )''')
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_images ON 
+                            documents_to_images(document_id, image_id)''')
 
     def save_document(self, document: Document):
         self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
                             '(?, ?, ?, ?, ?)',
-                            (document.url, document.content, document.downloaded_at,
+                            (document.url, document.title, document.downloaded_at,
                              document.created_at_or_none(), document.created_by_as_string()))
         document_id: int = self.cursor.lastrowid
-        for link in document.links:
+        for link in list(dict.fromkeys(document.links)):
             self.cursor.execute('SELECT id FROM links WHERE url = ?', (link,))
             result = self.cursor.fetchone()
             link_id: int
@@ -146,7 +156,7 @@ class SqliteRepository(Repository):
                 link_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_links (document_id, link_id) values (?, ?)',
                                 (document_id, link_id))
-        for image_url in document.image_urls:
+        for image_url in list(dict.fromkeys(document.image_urls)):
             self.cursor.execute('SELECT id from images WHERE url = ?', (image_url,))
             result = self.cursor.fetchone()
             image_id: int
@@ -158,40 +168,44 @@ class SqliteRepository(Repository):
             self.cursor.execute('INSERT INTO documents_to_images (document_id, image_id) VALUES (?, ?)',
                                 (document_id, image_id))
 
+    def get_next_link(self) -> tuple[int, str]:
+        self.cursor.execute('''SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url 
+                            WHERE d.id IS NULL AND l.downloaded = 0 AND l.skip = 0 ORDER BY l.id ASC''')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_link_downloaded(self, link_url: str) -> None:
+        self.cursor.execute('UPDATE links SET downloaded = 1 WHERE url = ?', (link_url,))
+        self.con.commit()
+
+    def set_link_skip(self, link_id: int) -> None:
+        self.cursor.execute('UPDATE links SET skip = 1 WHERE id = ?', (link_id,))
+        self.con.commit()
+
+    def get_next_image_url(self) -> tuple[int, str]:
+        self.cursor.execute('SELECT i.id, i.url FROM images i WHERE i.downloaded = 0 AND i.skip = 0 ORDER BY i.id ASC')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_image_downloaded(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET downloaded = 1 WHERE id = ?', (image_id,))
+        self.con.commit()
+
+    def set_image_skip(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET skip = 1 WHERE id = ?', (image_id,))
+        self.con.commit()
+
 
 class PostgresqlRepository(Repository):
     def __init__(self, config: dict):
         super().__init__(config)
-        self.con = psycopg.connect(dbname=(self.config["database"]["url"]),
-                                   user=(self.config["database"]["username"]),
-                                   password=(self.config["database"]["password"]))
+        self.con = psycopg.connect(dbname=(self.config["database"]["postgres"]["url"]),
+                                   user=(self.config["database"]["postgres"]["username"]),
+                                   password=(self.config["database"]["postgres"]["password"]))
         self.cursor = self.con.cursor()
 
     def create_tables(self):
-        self.cursor.execute('''CREATE TABLE documents (
-            id SERIAL PRIMARY KEY,
-            url VARCHAR(1000) NOT NULL,
-            content TEXT NOT NULL,
-            downloaded_at TIMESTAMP WITH TIME ZONE NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE,
-            created_by VARCHAR(100)
-        )''')
-        self.cursor.execute('''CREATE TABLE links (
-            id SERIAL PRIMARY KEY,
-            document_id INTEGER NOT NULL,
-            url VARCHAR(1000) NOT NULL,
-            CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id)
-        )''')
-        self.cursor.execute('''CREATE TABLE images (
-            id SERIAL PRIMARY KEY,
-            document_id INTEGER NOT NULL,
-            url VARCHAR(1000) NOT NULL,
-            filename VARCHAR(1000),
-            size INTEGER,
-            width INTEGER,
-            height INTEGER,
-            CONSTRAINT fk_document FOREIGN KEY (document_id) REFERENCES documents(id)
-        )''')
+        pass
 
     def save_document(self, document: Document):
         self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
@@ -223,6 +237,35 @@ class PostgresqlRepository(Repository):
                                 (document_id, image_id))
         self.con.commit()
 
+    def get_next_link(self) -> tuple[int, str]:
+        self.cursor.execute('''SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url 
+                            WHERE d.id IS NULL AND (l.downloaded = FALSE OR l.downloaded IS NULL) AND 
+                            (l.skip = FALSE OR l.skip IS NULL) ORDER BY l.id ASC''')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_link_downloaded(self, link_url: str) -> None:
+        self.cursor.execute('UPDATE links SET downloaded = TRUE WHERE url = %s', (link_url,))
+        self.con.commit()
+
+    def set_link_skip(self, link_id: int) -> None:
+        self.cursor.execute('UPDATE links SET skip = TRUE WHERE id = %s', (link_id,))
+        self.con.commit()
+
+    def get_next_image_url(self) -> tuple[int, str]:
+        self.cursor.execute('''SELECT i.id, i.url FROM images i WHERE (i.downloaded = FALSE OR i.downloaded IS NULL) AND 
+                            (i.skip = FALSE or i.skip IS NULL) ORDER BY i.id ASC''')
+        result = self.cursor.fetchone()
+        return int(result[0]), str(result[1])
+
+    def set_image_downloaded(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET downloaded = TRUE WHERE id = %s', (image_id,))
+        self.con.commit()
+
+    def set_image_skip(self, image_id: int) -> None:
+        self.cursor.execute('UPDATE images SET skip = TRUE WHERE id = %s', (image_id,))
+        self.con.commit()
+
 
 def init_sqlite() -> Repository:
     config = json.load(open('../config-heise.json'))
@@ -239,7 +282,7 @@ def init_postgresql() -> Repository:
 if __name__ == '__main__':
     # r = init_sqlite()
     r = init_postgresql()
-    d = Document('https://www.heise.de/', '<html>..</html>', datetime.now(),
+    d = Document('https://www.heise.de/', '<html>..</html>', 'my title', datetime.now(),
                  [str(datetime.now())], ['Michael Schmitt'],
                  ['https://www.heise.de/ct', 'https://www.heise.de/ix', 'https://www.heise.de/ct'],
                  ['https://www.heise.de/pic.jpg'])

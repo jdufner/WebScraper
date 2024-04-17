@@ -16,7 +16,7 @@ class ImageDownloader:
     def __init__(self, config: dict):
         self.config = config
         self.blacklist = Blacklist(config["blacklist"])
-        if config["database"]["url"].lower() == 'postgres':
+        if config["database"]["type"].lower() == 'postgres':
             self.repository: Repository = PostgresqlRepository(self.config)
         else:
             self.repository: Repository = SqliteRepository(self.config)

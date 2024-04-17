@@ -6,6 +6,9 @@ class BlacklistTestCase(unittest.TestCase):
 
     def setUp(self):
         self.urls = [
+            "http://itunes.apple.com/",
+            "http://www.amazon.de/",
+            "http://www.heise.de/api/",
             "http://www.heise.de/account/cancellation",
             "http://www.heise.de/benachrichtigungen/",
             "http://www.heise.de/kontakt/",
@@ -30,6 +33,7 @@ class BlacklistTestCase(unittest.TestCase):
             "https://kurzinformiert.podigee.io/episodes",
             "https://m.me/heiseonline",
             "https://mediadaten.heise.de/",
+            "https://play.google.com/",
             "https://pubads.g.doubleclick.net/",
             "https://security-tour.heise.de/",
             "https://shop.heise.de/",
@@ -37,21 +41,36 @@ class BlacklistTestCase(unittest.TestCase):
             "https://survey.vocatus.de/",
             "https://t3n.de/",
             "https://telepolis.de/",
-            "https://twitter.com/heiseonline",
+            "https://twitter.com/",
+            "https://u.openx.net/",
+            "https://webinare.heise.de/",
+            "https://www.ct.de/",
+            "https://www.eweka.nl/",
+            "https://www.facebook.com/",
             "https://www.geizhals.at/",
             "https://www.heise-gruppe.de/",
             "https://www.heise-regioconcept.de/",
+            "https://www.heise.de/ct/feed.xml",
             "https://www.heise.de/download",
             "https://www.heise.de/forum",
+            "http://www.heise.de/foto/",
+            "http://www.heise.de/foto/news/foren/",
+            "http://www.heise.de/foto/produktdaten/foren/",
             "https://www.heise.de/kontakt/",
+            "https://www.heise.de/mac-and-i/news-atom.xml",
             "https://www.heise.de/sso/",
+            "https://www.heisegroup.de/a",
             "https://www.hostg.xyz/",
+            "https://www.instagram.com/",
             "https://www.interred.de/",
+            "https://www.ix-konferenz.de",
             "https://www.plusline.net/",
             "https://www.techstage.de/",
             "https://www.telepolis.de/",
+            "https://www.twitter.com/",
             "https://www.xing.com/",
-            "http://www.heise.de/api/"
+            "https://www.youtube.com/",
+            "https://premium.usenext.com/"
         ]
 
     def test_is_listed_1(self):
@@ -81,6 +100,14 @@ class BlacklistTestCase(unittest.TestCase):
     def test_is_listed_7(self):
         blacklist = Blacklist(self.urls)
         self.assertTrue(blacklist.is_listed('https://www.telepolis.de/features/Ukraine-Krieg-Die-neue-Aera-der-Kriegsfuehrung-fordert-Panzertechnik-heraus-9677501.html'))
+
+    def test_is_listed_8(self):
+        blacklist = Blacklist(self.urls)
+        self.assertTrue(blacklist.is_listed('https://twitter.com/MakeMagazinDE'))
+
+    def test_is_listed_9(self):
+        blacklist = Blacklist(self.urls)
+        self.assertTrue(blacklist.is_listed('https://spiele.heise.de'))
 
 
 if __name__ == '__main__':

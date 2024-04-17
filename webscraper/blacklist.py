@@ -13,6 +13,7 @@ class Blacklist:
     def is_listed(self, url) -> bool:
         parsed_url = parse.urlparse(url)
         for black_url in self.blacks:
-            if parsed_url.netloc == black_url.netloc and parsed_url.path.startswith(black_url.path):
+            if parsed_url.netloc == black_url.netloc and (parsed_url.path == '' or
+                                                          parsed_url.path.startswith(black_url.path)):
                 return True
         return False
