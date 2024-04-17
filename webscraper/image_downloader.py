@@ -4,8 +4,9 @@ from datetime import datetime
 import json
 import logging
 import os
-from os.path import basename
 import requests
+from urllib import parse
+from urllib.parse import ParseResult
 from webscraper.blacklist import Blacklist
 from webscraper.repository import PostgresqlRepository
 from webscraper.repository import SqliteRepository
@@ -28,7 +29,12 @@ class ImageDownloader:
             self.repository.set_image_skip(id_url[0])
         else:
             logging.info(f'Download URL: {id_url[1]}')
-            with open(basename(id_url[1]), "wb") as f:
+            parsed_url: ParseResult = parse.urlparse(id_url[1])
+            head_tail = os.path.split(parsed_url.path)
+            logging.debug(f'Domain = {parsed_url.netloc}, Path = {head_tail[0]}, File = {head_tail[1]}')
+            path: str = config["download"]["data-dir"] + '/' + parsed_url.netloc + head_tail[0]
+            os.makedirs(path)
+            with open(path + '/' + head_tail[1], "wb") as f:
                 f.write(requests.get(id_url[1]).content)
             f.close()
             self.repository.set_image_downloaded(int(id_url[0]))
