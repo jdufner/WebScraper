@@ -122,9 +122,7 @@ class Downloader:
             self.__scroll_down_page_by_page()
             element_present = EC.presence_of_element_located((By.CSS_SELECTOR, self.config["download"]["footer"]))
             web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_present)
-            # element_visible = EC.visibility_of_element_located((By.CSS_SELECTOR, 'html body div div footer'))
-            # web_element: WebElement = WebDriverWait(self.browser, timeout).until(element_visible)
-            logging.info(f'Web_element present!')
+            logging.info(f'Web_element {web_element} present!')
             return True
         except TimeoutException:
             logging.info("Loading took too much time!")
@@ -181,8 +179,9 @@ class Downloader:
             self.browser.switch_to.default_content()
 
     def __build_document(self) -> Document:
-        return Document(self.url, self.html_source_code, self.title, self.downloaded_at, self.created_at, self.creators,
-                        self.links, self.image_urls)
+        return Document(self.url, self.html_source_code if self.config["download"]["save-html"].lower() == 'true'
+                        else '', self.title, self.downloaded_at, self.created_at, self.creators, self.links,
+                        self.image_urls)
 
     @staticmethod
     def __build_url(base_url, url_or_path: str) -> str:
