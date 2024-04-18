@@ -47,6 +47,10 @@ class Repository:
     def set_image_skip(self, image_id: int) -> None:
         pass
 
+    @abstractmethod
+    def update_image(self, image_id, filename, size, image_width, image_height) -> None:
+        pass
+
     def get_all(self):
         cur = self.cursor.execute('SELECT d.url, dl.id, dl.document_id, dl.link_id, l.url '
                                   'FROM documents d, documents_to_links dl, links l '
@@ -125,7 +129,7 @@ class SqliteRepository(Repository):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL UNIQUE,
             filename VARCHAR(1000),
-            size INTEGER,
+            filesize INTEGER,
             width INTEGER,
             height INTEGER,
             skip INTEGER DEFAULT 0,
@@ -168,6 +172,7 @@ class SqliteRepository(Repository):
                 image_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_images (document_id, image_id) VALUES (?, ?)',
                                 (document_id, image_id))
+        self.con.commit()
 
     def get_next_link(self) -> tuple[int, str]:
         self.cursor.execute('''SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url 
@@ -194,6 +199,11 @@ class SqliteRepository(Repository):
 
     def set_image_skip(self, image_id: int) -> None:
         self.cursor.execute('UPDATE images SET skip = 1 WHERE id = ?', (image_id,))
+        self.con.commit()
+
+    def update_image(self, image_id, filename, size, image_width, image_height) -> None:
+        self.cursor.execute('UPDATE images SET filename = ?, size = ?, width = ?, height = ? WHERE id = ?',
+                            (filename, size, image_width, image_height, image_id))
         self.con.commit()
 
 
@@ -265,6 +275,11 @@ class PostgresqlRepository(Repository):
 
     def set_image_skip(self, image_id: int) -> None:
         self.cursor.execute('UPDATE images SET skip = TRUE WHERE id = %s', (image_id,))
+        self.con.commit()
+
+    def update_image(self, image_id, filename, size, image_width, image_height) -> None:
+        self.cursor.execute('UPDATE images SET filename = %s, size = %s, width = %s, height = %s WHERE id = %s',
+                            (filename, size, image_width, image_height, image_id))
         self.con.commit()
 
 
