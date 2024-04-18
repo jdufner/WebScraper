@@ -7,7 +7,7 @@ import os
 import requests
 from urllib import parse
 from urllib.parse import ParseResult
-from webscraper.blacklist import Blacklist
+from webscraper.url_list import UrlList
 from webscraper.repository import PostgresqlRepository
 from webscraper.repository import SqliteRepository
 from webscraper.repository import Repository
@@ -16,7 +16,7 @@ from webscraper.repository import Repository
 class ImageDownloader:
     def __init__(self, config: dict):
         self.config = config
-        self.blacklist = Blacklist(config["blacklist"])
+        self.blacklist = UrlList(config["blacklist"])
         if config["database"]["type"].lower() == 'postgres':
             self.repository: Repository = PostgresqlRepository(self.config)
         else:

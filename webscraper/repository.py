@@ -102,6 +102,7 @@ class SqliteRepository(Repository):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL,
             content TEXT NOT NULL,
+            title TEXT,
             downloaded_at DATETIME NOT NULL,
             created_at DATETIME,
             created_by VARCHAR(100)
@@ -140,9 +141,9 @@ class SqliteRepository(Repository):
                             documents_to_images(document_id, image_id)''')
 
     def save_document(self, document: Document):
-        self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
-                            '(?, ?, ?, ?, ?)',
-                            (document.url, document.title, document.downloaded_at,
+        self.cursor.execute('INSERT INTO documents (url, content, title, downloaded_at, created_at, created_by) '
+                            'VALUES (?, ?, ?, ?, ?, ?)',
+                            (document.url, document.content, document.title, document.downloaded_at,
                              document.created_at_or_none(), document.created_by_as_string()))
         document_id: int = self.cursor.lastrowid
         for link in list(dict.fromkeys(document.links)):
@@ -210,7 +211,7 @@ class PostgresqlRepository(Repository):
     def save_document(self, document: Document):
         self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
                             '(%s, %s, %s, %s, %s) RETURNING id',
-                            (document.url, document.content, document.downloaded_at, document.created_at_or_none(),
+                            (document.url, document.title, document.downloaded_at, document.created_at_or_none(),
                              document.created_by_as_string()))
         document_id: int = self.cursor.fetchone()[0]
         for link in list(dict.fromkeys(document.links)):

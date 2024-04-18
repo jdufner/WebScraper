@@ -3,7 +3,7 @@ from urllib import parse
 from urllib.parse import ParseResult
 
 
-class Blacklist:
+class UrlList:
     def __init__(self, urls: list[str]) -> None:
         self.blacks: list[ParseResult] = []
         for url in urls:

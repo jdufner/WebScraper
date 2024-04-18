@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
 from urllib import parse
 from urllib.parse import ParseResult
-from webscraper.blacklist import Blacklist
+from webscraper.url_list import UrlList
 from webscraper.document import Document
 from webscraper.downloader import Downloader
 from webscraper.repository import PostgresqlRepository
@@ -15,7 +15,8 @@ class Walker:
     def __init__(self, config: dict) -> None:
         self.config: dict = config
         self.browser: WebDriver = webdriver.Chrome()
-        self.blacklist: Blacklist = Blacklist(config["blacklist"])
+        self.blacklist: UrlList = UrlList(config["blacklist"])
+        self.whitelist: UrlList = UrlList(config["whitelist"])
         if config["database"]["type"].lower() == 'postgres':
             self.repository: Repository = PostgresqlRepository(self.config)
         else:
@@ -39,8 +40,8 @@ class Walker:
         while True:
             id_url: tuple[id, str] = self.repository.get_next_link()
             logging.info(f'Got next url from database {id_url}')
-            if self.blacklist.is_listed(id_url[1]):
-                logging.info(f'Skip url because of blacklisted {id_url[1]}')
+            if (not self.whitelist.is_listed(id_url[1])) or self.blacklist.is_listed(id_url[1]):
+                logging.info(f'Skip url because of not whitelisted or blacklisted {id_url[1]}')
                 self.repository.set_link_skip(id_url[0])
             else:
                 logging.debug(f'Next url {id_url[1]}')

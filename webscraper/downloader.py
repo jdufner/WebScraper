@@ -45,14 +45,14 @@ class Downloader:
         return self.__build_document()
 
     def __get_and_parse_html_source(self) -> None:
-        self.html_source_code = self.browser.execute_script('return document.body.innerHTML;')
+        self.html_source_code = self.browser.execute_script('return document.documentElement.outerHTML;')
         self.soup: BeautifulSoup = BeautifulSoup(self.html_source_code, 'html.parser')
 
     def __find_first_title(self) -> None:
-        title_elements: ResultSet = self.soup.css.select('html head title')
+        title_elements: ResultSet = self.soup.css.select('head title')
         for title_element in title_elements:
             logging.debug(f'title of page {title_element.getText()}')
-            self.title = title_element
+            self.title = title_element.getText().strip().replace('\n', ' ').replace('\r', '')
             break
 
     def __find_created_at(self) -> None:
@@ -78,7 +78,7 @@ class Downloader:
             href = self.__build_url(self.url, href)
             if href is not None and self.__filter_url(href) != '':
                 if self.config["download"]["remove-parameter-query-fragment-from-url"].lower() == "true":
-                    href = self.__remove_query_and_fragment(href)
+                    href = self.__remove_parameter_and_query_and_fragment(href)
                 if len(href) > 1000:
                     logging.warning(f'URL is bigger than 1000 chars {href}')
                     break
@@ -194,7 +194,7 @@ class Downloader:
         return url_or_path
 
     @staticmethod
-    def __remove_query_and_fragment(url: str) -> str:
+    def __remove_parameter_and_query_and_fragment(url: str) -> str:
         parsed_url: ParseResult = parse.urlparse(url)
         if parsed_url.params != '' or parsed_url.query != '' or parsed_url.fragment != '':
             new_url: str = parse.urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
