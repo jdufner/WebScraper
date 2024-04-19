@@ -52,7 +52,8 @@ class Downloader:
         title_elements: ResultSet = self.soup.css.select('head title')
         for title_element in title_elements:
             logging.debug(f'title of page {title_element.getText()}')
-            self.title = title_element.getText().strip().replace('\n', ' ').replace('\r', '')
+            title: str = title_element.getText().strip().replace('\n', ' ').replace('\r', '')
+            self.title = ' '.join(title.split())
             break
 
     def __find_created_at(self) -> None:
