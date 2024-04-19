@@ -2,6 +2,7 @@ from abc import abstractmethod
 from datetime import datetime
 import json
 import psycopg
+import re
 import sqlite3
 from webscraper.document import Document
 
@@ -128,6 +129,7 @@ class SqliteRepository(Repository):
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL UNIQUE,
+            size_folder INTEGER,
             filename VARCHAR(1000),
             filesize INTEGER,
             width INTEGER,
@@ -162,17 +164,23 @@ class SqliteRepository(Repository):
             self.cursor.execute('INSERT INTO documents_to_links (document_id, link_id) values (?, ?)',
                                 (document_id, link_id))
         for image_url in list(dict.fromkeys(document.image_urls)):
-            self.cursor.execute('SELECT id from images WHERE url = ?', (image_url,))
+            self.cursor.execute('SELECT id FROM images WHERE url = ?', (image_url,))
             result = self.cursor.fetchone()
             image_id: int
             if result is None:
-                self.cursor.execute('INSERT INTO images (url) VALUES (?)', (image_url,))
+                self.cursor.execute('INSERT INTO images (url, size_folder) VALUES (?, ?)',
+                                    (image_url, self.__extract_size_folder(image_url)))
                 image_id = self.cursor.lastrowid
             else:
                 image_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_images (document_id, image_id) VALUES (?, ?)',
                                 (document_id, image_id))
         self.con.commit()
+
+    def __extract_size_folder(self, url) -> int | None:
+        match = re.search('https?://(\\w+.\\w+.\\w+)/(\\d+)/', url)
+        if match is not None:
+            return int(match.group(2))
 
     def get_next_link(self) -> tuple[int, str]:
         self.cursor.execute('''SELECT l.id, l.url FROM links l LEFT OUTER JOIN documents d ON l.url = d.url 
