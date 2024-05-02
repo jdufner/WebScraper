@@ -210,7 +210,7 @@ class SqliteRepository(Repository):
         self.con.commit()
 
     def update_image(self, image_id, filename, size, image_width, image_height) -> None:
-        self.cursor.execute('UPDATE images SET filename = ?, size = ?, width = ?, height = ? WHERE id = ?',
+        self.cursor.execute('UPDATE images SET filename = ?, filesize = ?, width = ?, height = ? WHERE id = ?',
                             (filename, size, image_width, image_height, image_id))
         self.con.commit()
 

@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import logging
 import os
+import re
 import requests
 from urllib import parse
 from urllib.parse import ParseResult
@@ -31,12 +32,16 @@ class ImageDownloader:
 
     def __download_next_image(self):
         id_url: tuple[int, str] = self.repository.get_next_image_url()
-        if not self.whitelist.is_listed(id_url[1]) or self.blacklist.is_listed(id_url[1]):
-            logging.debug(f'Skip URL: {id_url[1]}')
+        url: str = id_url[1]
+        match = re.match('(https?://\\w+.\\w+.\\w+/)(\\d+)(/[a-zA-Z0-9/_]+.jpg)', url)
+        if match is not None:
+            url = match[1] + '1280' + match[3]
+        if not self.whitelist.is_listed(url) or self.blacklist.is_listed(url):
+            logging.debug(f'Skip URL: {url}')
             self.repository.set_image_skip(id_url[0])
         else:
-            logging.info(f'Download URL: {id_url[1]}')
-            filename = self.__download_image(id_url)
+            logging.info(f'Download URL: {url}')
+            filename = self.__download_image((id_url[0], url))
             self.__analyze_image(id_url[0], filename)
 
     def __download_image(self, id_url: tuple[int, str]) -> str:
