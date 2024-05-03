@@ -9,10 +9,10 @@ import re
 import requests
 from urllib import parse
 from urllib.parse import ParseResult
-from webscraper.url_list import UrlList
-from webscraper.repository import PostgresqlRepository
-from webscraper.repository import SqliteRepository
-from webscraper.repository import Repository
+from webscraper.page_downloader.url_list import UrlList
+from webscraper.page_downloader.repository import PostgresqlRepository
+from webscraper.page_downloader.repository import SqliteRepository
+from webscraper.page_downloader.repository import Repository
 
 
 class ImageDownloader:

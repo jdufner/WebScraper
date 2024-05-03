@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 import logging
 import os
-from webscraper.walker import Walker
+from webscraper.page_downloader.walker import Walker
 
 
 def __parse_arguments() -> Namespace:

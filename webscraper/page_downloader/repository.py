@@ -4,7 +4,7 @@ import json
 import psycopg
 import re
 import sqlite3
-from webscraper.document import Document
+from webscraper.page_downloader.document import Document
 
 
 class Repository:
@@ -292,13 +292,13 @@ class PostgresqlRepository(Repository):
 
 
 def init_sqlite() -> Repository:
-    config = json.load(open('../config-heise.json'))
+    config = json.load(open('../../config-heise.json'))
     r: Repository = SqliteRepository(config)
     return r
 
 
 def init_postgresql() -> Repository:
-    config = json.load(open('../config-heise.json'))
+    config = json.load(open('../../config-heise.json'))
     r: Repository = PostgresqlRepository(config)
     return r
 

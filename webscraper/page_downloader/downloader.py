@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 import time
 from urllib import parse
 from urllib.parse import ParseResult
-from webscraper.document import Document
+from webscraper.page_downloader.document import Document
 
 
 class Downloader:

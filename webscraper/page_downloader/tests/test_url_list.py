@@ -1,5 +1,5 @@
 import unittest
-from webscraper.url_list import UrlList
+from webscraper.page_downloader.url_list import UrlList
 
 
 class UrlListTestCase(unittest.TestCase):
