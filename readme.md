@@ -8,6 +8,16 @@
 
 ## Dependencies
 
+| Name                   | Library          | Purpose                                  |
+|:-----------------------|------------------|------------------------------------------|
+| OpenCV                 | opencv-python    |                                          |
+| Beautiful Soup         | bs4              |                                          |
+| PostgresSQL Connection | psycopg[binary]  | Library to connect to PostgreSQL server. |
+| Selenium               | selenium         |                                          |
+| Sqlite                 | sqlite           |                                          |
+| Certificates for SSL   | pip-system-certs |                                          |
+
+
 ### Install From Scratch
 
     py -m pip install bs4 selenium psycopg[binary]

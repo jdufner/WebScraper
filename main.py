@@ -32,4 +32,4 @@ if __name__ == '__main__':
                                '%(module)s - %(funcName)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.getLevelNamesMapping()[config["logging"]["level"].upper()])
-    Walker(config).walk(config["start-url"], int(config["number-pages"]))
+    Walker(config).walk(config["start-url"], config["number-pages"])
