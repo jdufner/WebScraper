@@ -28,3 +28,12 @@ CREATE TABLE documents_to_images (
     document_id INTEGER NOT NULL,
     image_id INTEGER NOT NULL
 );
+CREATE TABLE categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100)
+);
+CREATE TABLE documents_to_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL
+);

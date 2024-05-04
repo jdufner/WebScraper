@@ -29,7 +29,7 @@ entity documents_to_links {
 entity images {
     id: UUID <<generated>>
     --
-    * url: varchar(1000) <<UNIQUE INDEX>>
+    * url: varchar(1000) <<UNIQUE>>
     size: integer
     width: integer
     height: integer
@@ -43,10 +43,25 @@ entity documents_to_images {
     * image_id: UUID <<FK>>
 }
 
+entity categories {
+    id: UUID <<generated>>
+    --
+    name: varchar(1000) <<UNIQUE>>
+}
+
+entity documents_to_categories {
+    id: UUID <<generated>>
+    --
+    * document_id: UUID <<FK>>
+    * category_id: UUID <<FK>>
+
+}
 
 documents ||--o{ documents_to_links
 documents_to_links }|--|| links
 documents ||--o{ documents_to_images
 documents_to_images }|--|| images
+documents ||-o{ documents_to_categories
+documents_to_categories }|--|| categories
 
 @enduml

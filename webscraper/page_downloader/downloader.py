@@ -26,6 +26,7 @@ class Downloader:
         self.title = ''
         self.created_at = []
         self.creators = []
+        self.categories = []
         self.links = []
         self.image_urls = []
 
@@ -40,6 +41,7 @@ class Downloader:
         self.__find_first_title()
         self.__find_created_at()
         self.__find_creators()
+        self.__find_categories()
         self.__find_links()
         self.__extract_images()
         return self.__build_document()
@@ -69,6 +71,12 @@ class Downloader:
             for creator_element in creator_elements:
                 logging.debug(f'created by {creator_element.getText()}')
                 self.creators.append(creator_element.getText())
+
+    def __find_categories(self) -> None:
+        category_elements: ResultSet = self.soup.css.select('div.content-categories a')
+        for category_element in category_elements:
+            logging.debug(f'category {category_element.getText()}')
+            self.categories.append(category_element.getText())
 
     def __find_links(self) -> None:
         a_elements: ResultSet = self.soup.find_all('a')
@@ -181,8 +189,8 @@ class Downloader:
 
     def __build_document(self) -> Document:
         return Document(self.url, self.html_source_code if self.config["download"]["save-html"].lower() == 'true'
-                        else '', self.title, self.downloaded_at, self.created_at, self.creators, self.links,
-                        self.image_urls)
+                        else '', self.title, self.downloaded_at, self.created_at, self.creators, self.categories,
+                        self.links, self.image_urls)
 
     @staticmethod
     def __build_url(base_url, url_or_path: str) -> str:

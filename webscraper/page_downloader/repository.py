@@ -139,12 +139,24 @@ class SqliteRepository(Repository):
         )''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_images_url ON images(url)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents_to_images (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             document_id INTEGER NOT NULL,
             image_id INTEGER NOT NULL
         )''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_images ON 
                             documents_to_images(document_id, image_id)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL UNIQUE
+        )''')
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_name ON categories(name)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents_to_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            document_id INTEGER NOT NULL,
+            category_id INTEGER NOT NULL
+        )''')
+        self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_categories ON
+                            documents_to_categories(document_id, category_id)''')
 
     def save_document(self, document: Document):
         self.cursor.execute('INSERT INTO documents (url, content, title, downloaded_at, created_at, created_by) '
@@ -175,6 +187,17 @@ class SqliteRepository(Repository):
                 image_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_images (document_id, image_id) VALUES (?, ?)',
                                 (document_id, image_id))
+        for category in list(dict.fromkeys(document.categories)):
+            self.cursor.execute('SELECT id FROM categories WHERE name = ?', (category,))
+            result = self.cursor.fetchone()
+            category_id: int
+            if result is None:
+                self.cursor.execute('INSERT INTO categories (name) VALUES (?)', (category,))
+                category_id = self.cursor.lastrowid
+            else:
+                category_id = result[0]
+            self.cursor.execute('INSERT INTO documents_to_categories (document_id, category_id) VALUES (?, ?)',
+                                (document_id, category_id))
         self.con.commit()
 
     def __extract_size_folder(self, url) -> int | None:
