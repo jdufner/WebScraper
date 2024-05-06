@@ -1,6 +1,4 @@
 from abc import abstractmethod
-from datetime import datetime
-import json
 import psycopg
 import re
 import sqlite3
@@ -17,11 +15,11 @@ class Repository:
         self.con.close()
 
     @abstractmethod
-    def create_tables(self):
+    def create_tables(self) -> None:
         pass
 
     @abstractmethod
-    def save_document(self, document: Document):
+    def save_document(self, document: Document) -> None:
         pass
 
     @abstractmethod
@@ -51,12 +49,6 @@ class Repository:
     @abstractmethod
     def update_image(self, image_id, filename, size, image_width, image_height) -> None:
         pass
-
-    def get_all(self):
-        cur = self.cursor.execute('SELECT d.url, dl.id, dl.document_id, dl.link_id, l.url '
-                                  'FROM documents d, documents_to_links dl, links l '
-                                  'WHERE d.id = dl.document_id and dl.link_id = l.id ')
-        print(cur.fetchall())
 
     @staticmethod
     def document_to_link_dict(document: Document, document_id: int) -> list[dict]:
@@ -88,7 +80,7 @@ class Repository:
 
 
 class SqliteRepository(Repository):
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         super().__init__(config)
         if self.config["database"]["type"].lower() == "in-memory":
             self.con = sqlite3.connect(self.config["database"]["in-memory"]["url"])
@@ -98,11 +90,6 @@ class SqliteRepository(Repository):
         self.create_tables()
 
     def create_tables(self):
-        # self.cursor.execute('''DROP TABLE IF EXISTS documents_to_images''')
-        # self.cursor.execute('''DROP TABLE IF EXISTS images''')
-        # self.cursor.execute('''DROP TABLE IF EXISTS documents_to_links''')
-        # self.cursor.execute('''DROP TABLE IF EXISTS links''')
-        # self.cursor.execute('''DROP TABLE IF EXISTS documents''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL,
@@ -158,7 +145,7 @@ class SqliteRepository(Repository):
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_categories ON
                             documents_to_categories(document_id, category_id)''')
 
-    def save_document(self, document: Document):
+    def save_document(self, document: Document) -> None:
         self.cursor.execute('INSERT INTO documents (url, content, title, downloaded_at, created_at, created_by) '
                             'VALUES (?, ?, ?, ?, ?, ?)',
                             (document.url, document.content, document.title, document.downloaded_at,
@@ -239,17 +226,17 @@ class SqliteRepository(Repository):
 
 
 class PostgresqlRepository(Repository):
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         super().__init__(config)
         self.con = psycopg.connect(dbname=(self.config["database"]["postgres"]["url"]),
                                    user=(self.config["database"]["postgres"]["username"]),
                                    password=(self.config["database"]["postgres"]["password"]))
         self.cursor = self.con.cursor()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         pass
 
-    def save_document(self, document: Document):
+    def save_document(self, document: Document) -> None:
         self.cursor.execute('INSERT INTO documents (url, content, downloaded_at, created_at, created_by) VALUES'
                             '(%s, %s, %s, %s, %s) RETURNING id',
                             (document.url, document.title, document.downloaded_at, document.created_at_or_none(),
@@ -312,31 +299,3 @@ class PostgresqlRepository(Repository):
         self.cursor.execute('UPDATE images SET filename = %s, size = %s, width = %s, height = %s WHERE id = %s',
                             (filename, size, image_width, image_height, image_id))
         self.con.commit()
-
-
-def init_sqlite() -> Repository:
-    config = json.load(open('../../config-heise.json'))
-    r: Repository = SqliteRepository(config)
-    return r
-
-
-def init_postgresql() -> Repository:
-    config = json.load(open('../../config-heise.json'))
-    r: Repository = PostgresqlRepository(config)
-    return r
-
-
-if __name__ == '__main__':
-    # r = init_sqlite()
-    r = init_postgresql()
-    d = Document('https://www.heise.de/', '<html>..</html>', 'my title', datetime.now(),
-                 [str(datetime.now())], ['Michael Schmitt'],
-                 ['https://www.heise.de/ct', 'https://www.heise.de/ix', 'https://www.heise.de/ct'],
-                 ['https://www.heise.de/pic.jpg'])
-    r.save_document(d)
-    r.get_all()
-
-    # timestamp: float = time.time()
-    # print(timestamp)
-    # dt: datetime = datetime.fromtimestamp(timestamp)
-    # print(dt)

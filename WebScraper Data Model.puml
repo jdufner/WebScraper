@@ -46,7 +46,7 @@ entity documents_to_images {
 entity categories {
     id: UUID <<generated>>
     --
-    name: varchar(1000) <<UNIQUE>>
+    name: varchar(100) <<UNIQUE>>
 }
 
 entity documents_to_categories {
