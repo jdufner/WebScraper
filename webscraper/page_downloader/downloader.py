@@ -188,9 +188,8 @@ class Downloader:
             self.browser.switch_to.default_content()
 
     def __build_document(self) -> Document:
-        return Document(self.url, self.html_source_code if self.config["download"]["save-html"].lower() == 'true'
-                        else '', self.title, self.downloaded_at, self.created_at, self.creators, self.categories,
-                        self.links, self.image_urls)
+        return Document(self.url, self.html_source_code, self.title, self.downloaded_at, self.created_at,
+                        self.creators, self.categories, self.links, self.image_urls)
 
     @staticmethod
     def __build_url(base_url, url_or_path: str) -> str:

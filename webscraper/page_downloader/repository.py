@@ -22,6 +22,12 @@ class Repository:
     def save_document(self, document: Document) -> None:
         pass
 
+    def save_document_content_as_per_config(self, document: Document) -> str | None:
+        if self.config["download"]["save-html"].lower() == 'true':
+            return document.content
+        else:
+            return ''
+
     @abstractmethod
     def get_next_link(self) -> tuple[int, str]:
         pass
@@ -93,7 +99,7 @@ class SqliteRepository(Repository):
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url VARCHAR(1000) NOT NULL,
-            content TEXT NOT NULL,
+            content TEXT,
             title TEXT,
             downloaded_at DATETIME NOT NULL,
             created_at DATETIME,
@@ -148,9 +154,16 @@ class SqliteRepository(Repository):
     def save_document(self, document: Document) -> None:
         self.cursor.execute('INSERT INTO documents (url, content, title, downloaded_at, created_at, created_by) '
                             'VALUES (?, ?, ?, ?, ?, ?)',
-                            (document.url, document.content, document.title, document.downloaded_at,
-                             document.created_at_or_none(), document.created_by_as_string()))
+                            (document.url, self.save_document_content_as_per_config(document),
+                             document.title, document.downloaded_at, document.created_at_or_none(),
+                             document.created_by_as_string()))
         document_id: int = self.cursor.lastrowid
+        self.__save_links(document, document_id)
+        self.__save_image_urls(document, document_id)
+        self.__save_categories(document, document_id)
+        self.con.commit()
+
+    def __save_links(self, document, document_id):
         for link in list(dict.fromkeys(document.links)):
             self.cursor.execute('SELECT id FROM links WHERE url = ?', (link,))
             result = self.cursor.fetchone()
@@ -162,6 +175,8 @@ class SqliteRepository(Repository):
                 link_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_links (document_id, link_id) values (?, ?)',
                                 (document_id, link_id))
+
+    def __save_image_urls(self, document, document_id):
         for image_url in list(dict.fromkeys(document.image_urls)):
             self.cursor.execute('SELECT id FROM images WHERE url = ?', (image_url,))
             result = self.cursor.fetchone()
@@ -174,6 +189,8 @@ class SqliteRepository(Repository):
                 image_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_images (document_id, image_id) VALUES (?, ?)',
                                 (document_id, image_id))
+
+    def __save_categories(self, document, document_id):
         for category in list(dict.fromkeys(document.categories)):
             self.cursor.execute('SELECT id FROM categories WHERE name = ?', (category,))
             result = self.cursor.fetchone()
@@ -185,7 +202,6 @@ class SqliteRepository(Repository):
                 category_id = result[0]
             self.cursor.execute('INSERT INTO documents_to_categories (document_id, category_id) VALUES (?, ?)',
                                 (document_id, category_id))
-        self.con.commit()
 
     def __extract_size_folder(self, url) -> int | None:
         match = re.search('https?://(\\w+.\\w+.\\w+)/(\\d+)/', url)
