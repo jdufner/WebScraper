@@ -1,0 +1,40 @@
+body {
+  margin: 0; /* Remove default body margin */
+  overflow: hidden; /* Prevent body overflow */
+}
+
+.container {
+  display: grid;
+  grid-gap: 10px; /* Adjust gap between images as desired */
+  height: 100vh; /* Set container height to 100% viewport height */
+}
+
+.box {
+  overflow: hidden; /* Prevent images from overflowing container */
+  /* Add display: flex; to center forms within boxes */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.box img {
+  object-fit: contain; /* Maintain aspect ratio and fit within container */
+  width: 100%; /* Images fill container width */
+  height: 100%; /* Images fill container height */
+}
+
+/* Media Queries for Responsive Layout */
+
+@media screen and (orientation: portrait) {
+  .container {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(2, 1fr);
+  }
+}
+
+@media screen and (orientation: landscape) {
+  .container {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+  }
+}
