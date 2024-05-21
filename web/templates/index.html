@@ -8,7 +8,7 @@
     <body>
         <div class="container">
             <div class="box">
-                <img src="{{ img1 }}" alt="Image 1" onclick="document.getElementById('form1').submit();">
+                <img src="{{ prefix + img1 }}" alt="Image 1" onclick="document.getElementById('form1').submit();">
                 <form id="form1" action="/choice" method="post">
                     <input type="hidden" name="first" value="{{ img1 }}" readonly>
                     <input type="hidden" name="second" value="{{ img2 }}" readonly>
@@ -16,7 +16,7 @@
                 </form>
             </div>
             <div class="box">
-                <img src="{{ img2 }}" alt="Image 2" onclick="document.getElementById('form2').submit();">
+                <img src="{{ prefix + img2 }}" alt="Image 2" onclick="document.getElementById('form2').submit();">
                 <form id="form2" action="/choice" method="post" style="in">
                     <input type="hidden" name="first" value="{{ img2 }}" readonly>
                     <input type="hidden" name="second" value="{{ img1 }}" readonly>

@@ -5,14 +5,8 @@ from flask import Flask, render_template, url_for, request, app
 import json
 import logging
 import os
-
 from picturechoice.server.choice import Choice
-from picturechoice.server.repository import Repository
-
-
-class PictureChoiceServer:
-    def __init__(self, config: dict):
-        self.config = config
+from picturechoice.server.repository import Repository, SqliteRepository
 
 
 def __parse_arguments() -> Namespace:
@@ -29,38 +23,48 @@ def __load_config() -> dict:
     return conf
 
 
+def __handle_request(repository: Repository, param: dict) -> None:
+    request_timestamp: datetime = datetime.fromisoformat(param['timestamp'])
+    request_first: str = param['first']
+    request_second: str = param['second']
+    choice = Choice(request_timestamp, request_first, request_second)
+    repository.save_choice(choice)
+
+
+def __get_two_random_images(repository: Repository) -> ((int, str), (int, str)):
+    image1: (int, str) = repository.get_random_image()
+    image2: (int, str) = repository.get_random_image()
+    while image1[0] == image2[0]:
+        image2 = repository.get_random_image()
+    return image1, image2
+
+
+def __next_choice(repository: Repository) -> str:
+    image1, image2 = __get_two_random_images(repository)
+    timestamp = datetime.now().isoformat()
+    return render_template('/index.html',
+                           prefix='/static/images/',
+                           img1=image1[1],
+                           img2=image2[1],
+                           timestamp=timestamp)
+
+
 app: Flask = Flask(__name__,
                    static_folder='../../web/static',
                    template_folder='../../web/templates')
 
 
 @app.route('/')
-def home():
-    timestamp = datetime.now().isoformat()
-    return render_template('/index.html',
-                           img1='/static/images/Pfau.jpg',
-                           img2='/static/images/Chilis.jpg',
-                           timestamp=timestamp)
+def home() -> str:
+    repository: Repository = app.config['repository']
+    return __next_choice(repository)
 
 
 @app.route('/choice', methods=['POST'])
-def on_click():
-    handle_request(request.form)
-
-    timestamp = datetime.now().isoformat()
-    return render_template('/index.html',
-                           img1='/static/images/Pfau.jpg',
-                           img2='/static/images/Chilis.jpg',
-                           timestamp=timestamp)
-
-
-def handle_request(param: dict) -> None:
-    request_timestamp: datetime = datetime.fromisoformat(param['timestamp'])
-    request_first: str = param['first']
-    request_second: str = param['second']
-    logging.info(f'timestamp = {request_timestamp}, first = {request_first}, second = {request_second}')
-    choice = Choice(request_timestamp, request_first, request_second)
-    repository.save(choice)
+def on_click() -> str:
+    repository: Repository = app.config['repository']
+    __handle_request(repository, request.form)
+    return __next_choice()
 
 
 if __name__ == '__main__':
@@ -74,5 +78,11 @@ if __name__ == '__main__':
                                '%(module)s - %(funcName)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.getLevelNamesMapping()[config["logging"]["level"].upper()])
-    repository = Repository(config)
+    if config["database"]["type"].lower() == 'postgres':
+        # repository: Repository = PostgresqlRepository(config)
+        pass
+    else:
+        repository: Repository = SqliteRepository(config)
+    app.config['repository'] = repository
+    repository.get_random_image()
     app.run(debug=True)
