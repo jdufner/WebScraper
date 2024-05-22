@@ -1,7 +1,7 @@
 import argparse
 from argparse import Namespace
 from datetime import datetime
-from flask import Flask, render_template, url_for, request, app
+from flask import Flask, render_template, url_for, request, app, current_app
 import json
 import logging
 import os
@@ -56,15 +56,26 @@ app: Flask = Flask(__name__,
 
 @app.route('/')
 def home() -> str:
-    repository: Repository = app.config['repository']
-    return __next_choice(repository)
+    return __next_choice(get_repository_from_app_context())
 
 
 @app.route('/choice', methods=['POST'])
 def on_click() -> str:
-    repository: Repository = app.config['repository']
-    __handle_request(repository, request.form)
-    return __next_choice()
+    __handle_request(get_repository_from_app_context(), request.form)
+    return __next_choice(get_repository_from_app_context())
+
+
+def __get_repository() -> Repository:
+    if config["database"]["type"].lower() == 'postgres':
+        # repository: Repository = PostgresqlRepository(config)
+        pass
+    else:
+        repository: Repository = SqliteRepository(config)
+    return repository
+
+
+def get_repository_from_app_context() -> Repository:
+    return current_app.config['repository']
 
 
 if __name__ == '__main__':
@@ -78,11 +89,6 @@ if __name__ == '__main__':
                                '%(module)s - %(funcName)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.getLevelNamesMapping()[config["logging"]["level"].upper()])
-    if config["database"]["type"].lower() == 'postgres':
-        # repository: Repository = PostgresqlRepository(config)
-        pass
-    else:
-        repository: Repository = SqliteRepository(config)
-    app.config['repository'] = repository
-    repository.get_random_image()
+    with app.app_context():
+        app.config['repository'] = __get_repository()
     app.run(debug=True)
