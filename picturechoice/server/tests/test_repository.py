@@ -14,7 +14,7 @@ class RepositoryTestCase(unittest.TestCase):
                     "password": ""
                 },
                 "sqlite3": {
-                    "url": "../../../hot_sqlite3.db",
+                    "url": " ../../heise_sqlite3.db",
                     "username": "",
                     "password": ""
                 }

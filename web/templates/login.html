@@ -9,12 +9,15 @@
         {% if current_user.is_authenticated %}
           <h1>Hello {{ current_user.name }}!</h1>
         {% endif %}
-        <h2>Picture Choice</h2>
-        {% if current_user.is_authenticated %}
-            <p><a href="choice">Choice</a></p>
-        {% else %}
-            <p><a href="login">Login</a></p>
-        {% endif %}
+        <form action="/login" method="post">
+            <h2>Login</h2>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <input type="submit" value="Login">
+        </form>
         <script src="/static/script.js"></script>
     </body>
 </html>
