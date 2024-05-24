@@ -17,10 +17,22 @@ body {
   align-items: center;
 }
 
-.box img {
+.box img, .box label {
   object-fit: contain; /* Maintain aspect ratio and fit within container */
   width: 100%; /* Images fill container width */
   height: 100%; /* Images fill container height */
+}
+
+.back-link {
+  position: absolute; /* Position back link absolutely */
+  top: 10px; /* Adjust link position as desired */
+  left: 10px; /* Adjust link position as desired */
+  z-index: 1; /* Ensure link is on top of images */
+  padding: 5px 10px; /* Add padding to link */
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  color: white; /* Text color */
+  text-decoration: none; /* Remove underline */
+  font-weight: bold; /* Make link stand out */
 }
 
 /* Media Queries for Responsive Layout */

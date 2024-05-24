@@ -8,7 +8,11 @@
     <body>
         <div class="container">
             <div class="box">
-                <img src="{{ prefix + img1 }}" alt="Image 1" onclick="document.getElementById('form1').submit();">
+                <a href="back.html" class="back-link">Back</a>
+                <label for="image1">
+                    <img id="image1" src="{{ prefix + img1 }}" alt="Image 1" onclick="document.getElementById('form1').submit();">
+                    <!--img id="image1" src="/static/images/N3169N3166Final1024.jpg" alt="Image 1" onclick="document.getElementById('form1').submit();"-->
+                </label>
                 <form id="form1" action="/choice" method="post">
                     <input type="hidden" name="first" value="{{ img1 }}" readonly>
                     <input type="hidden" name="second" value="{{ img2 }}" readonly>
@@ -16,7 +20,10 @@
                 </form>
             </div>
             <div class="box">
-                <img src="{{ prefix + img2 }}" alt="Image 2" onclick="document.getElementById('form2').submit();">
+                <label for="image2">
+                    <img id="image2" src="{{ prefix + img2 }}" alt="Image 2" onclick="document.getElementById('form2').submit();">
+                    <!--img id="image2" src="/static/images/M78_Euclid_960.jpg" alt="Image 2" onclick="document.getElementById('form2').submit();"-->
+                </label>
                 <form id="form2" action="/choice" method="post" style="in">
                     <input type="hidden" name="first" value="{{ img2 }}" readonly>
                     <input type="hidden" name="second" value="{{ img1 }}" readonly>
