@@ -1,10 +1,12 @@
 import argparse
+import random
 from argparse import Namespace
 from datetime import datetime
-from flask import Flask, render_template, url_for, request, app, current_app, redirect, Response
-from flask_login import LoginManager, login_required, login_user, current_user
+from flask import Flask, render_template, url_for, request, current_app, redirect, Response
+from flask_login import LoginManager, login_required, login_user
 import json
 import logging
+import math
 import os
 from picturechoice.server.choice import Choice
 from picturechoice.server.repository import Repository, SqliteRepository
@@ -34,20 +36,57 @@ def __handle_request(repository: Repository, param: dict) -> None:
 
 
 def __get_two_random_images(repository: Repository) -> ((int, str), (int, str)):
-    image1: (int, str) = repository.get_random_image()
-    image2: (int, str) = repository.get_random_image()
-    while image1[0] == image2[0]:
-        image2 = repository.get_random_image()
+    image1: (int, str) = __get_random_image(repository)
+    image2: (int, str) = __get_random_image(repository)
     return image1, image2
+
+
+def __is_next_image_not_rated(repository: Repository) -> bool:
+    rnd = random.random()
+    total_number_images = repository.get_total_number_images()
+    number_not_yet_rated_images = repository.get_number_not_yet_rated_images()
+    return rnd < 2 * number_not_yet_rated_images / total_number_images
+
+
+def __get_random_not_yet_rated_image(repository: Repository) -> (int, str):
+    rnd = random.random()
+    number_not_yet_rated_images = repository.get_number_not_yet_rated_images()
+    image: (int, str) = repository.get_not_yet_rated_image_by_row_num(int(rnd * number_not_yet_rated_images) + 1)
+    repository.set_image_as_rated_by(image[0])
+    return image
+
+
+def __get_already_rated_image(repository: Repository) -> (int, str):
+    rnd = random.random()
+    number_already_rated_images = repository.get_number_already_rated_images()
+    rnd = math.log2(rnd + 1)
+    # rnd = 2 * math.log2(rnd + 1) / math.log2(2 * (rnd + 1))
+    image: (int, str) = repository.get_already_rated_image_by_row_num(int(rnd * number_already_rated_images) + 1)
+    return image
+
+
+def __get_random_image(repository: Repository) -> (int, str):
+    if __is_next_image_not_rated(repository):
+        return __get_random_not_yet_rated_image(repository)
+    else:
+        return __get_already_rated_image(repository)
+
+
+def __remove_prefix(text, prefix):
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
 
 
 def __next_choice(repository: Repository) -> str:
     image1, image2 = __get_two_random_images(repository)
     timestamp = datetime.now().isoformat()
     return render_template('/choice.html',
-                           prefix='/static/images/',
-                           img1=image1[1],
-                           img2=image2[1],
+                           prefix='',
+                           img1=__remove_prefix(image1[1], 'web/'),
+                           img2=__remove_prefix(image2[1], 'web/'),
+                           img1_id=image1[0],
+                           img2_id=image2[0],
                            timestamp=timestamp)
 
 
@@ -99,10 +138,8 @@ def login() -> str | Response:
         if username in users and users[username] == password:
             user = User(username, password)
             login_user(user)
-            # flash('Logged in successfully!')
             return redirect(url_for('home'))
         else:
-            # flash('Invalid username or password!')
             return render_template('login.html')
     else:
         return render_template('login.html')

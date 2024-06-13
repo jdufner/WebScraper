@@ -14,8 +14,8 @@
                     <!--img id="image1" src="/static/images/N3169N3166Final1024.jpg" alt="Image 1" onclick="document.getElementById('form1').submit();"-->
                 </label>
                 <form id="form1" action="/choice" method="post">
-                    <input type="hidden" name="first" value="{{ img1 }}" readonly>
-                    <input type="hidden" name="second" value="{{ img2 }}" readonly>
+                    <input type="hidden" name="first" value="{{ img1_id }}" readonly>
+                    <input type="hidden" name="second" value="{{ img2_id }}" readonly>
                     <input type="hidden" name="timestamp" value="{{ timestamp }}" readonly>
                 </form>
             </div>
@@ -25,8 +25,8 @@
                     <!--img id="image2" src="/static/images/M78_Euclid_960.jpg" alt="Image 2" onclick="document.getElementById('form2').submit();"-->
                 </label>
                 <form id="form2" action="/choice" method="post" style="in">
-                    <input type="hidden" name="first" value="{{ img2 }}" readonly>
-                    <input type="hidden" name="second" value="{{ img1 }}" readonly>
+                    <input type="hidden" name="first" value="{{ img2_id }}" readonly>
+                    <input type="hidden" name="second" value="{{ img1_id }}" readonly>
                     <input type="hidden" name="timestamp" value="{{ timestamp }}" readonly>
                 </form>
             </div>

@@ -129,7 +129,7 @@ class SqliteRepository(Repository):
             height INTEGER,
             skip INTEGER DEFAULT 0,
             downloaded INTEGER DEFAULT 0,
-            rank INTEGER DEFAULT 0
+            rank INTEGER DEFAULT -1000
         )''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS idx_images_url ON images(url)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS documents_to_images (

@@ -1,0 +1,38 @@
+@startuml
+
+title Image providing
+
+start
+
+:Create a random number x:
+0 <= x < 1;
+:Count total number of image:
+total_number_images;
+:Count not yet rated images:
+number_of_not_yet_rated_images;
+:Calculate quotient of not yet rated images:
+quotient_not_yet_rated_images = number_of_not_yet_rated_images / total_number_images;
+if (x < 2 * quotient_not_yet_rated_images) then (yes)
+    :Select a not yet rated image;
+    :Create a random number y:
+    0 <= y < 1;
+    :Calculate row number of not yet rated image:
+    row_number_of_not_yet_rated_image = y * number_of_not_yet_rated_images;
+    :Return row_number_of_not_yet_rated_image;
+    end
+else (no)
+    :Select an already rated image;
+    :Create a random number z:
+    0 <= z < 1;
+    :Prefer higher rated images:
+    z = log2(z + 1)  oder
+    z = 2*ln(z + 1) / ln(2 * (z + 1));
+    :Count already rated images:
+    number_of_already_rated_images;
+    :Calculate row number an already rated image:
+    row_number_of_already_rated_image = z * number_of_already_rated_images;
+    :Return row_number_of_already_rated_image;
+    end
+endif
+
+@enduml

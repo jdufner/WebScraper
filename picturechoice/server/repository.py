@@ -26,6 +26,30 @@ class Repository:
     def get_random_image(self) -> (int, str):
         pass
 
+    @abstractmethod
+    def get_total_number_images(self):
+        pass
+
+    @abstractmethod
+    def get_number_not_yet_rated_images(self):
+        pass
+
+    @abstractmethod
+    def get_not_yet_rated_image_by_row_num(self, row_num):
+        pass
+
+    @abstractmethod
+    def set_image_as_rated_by(self, id):
+        pass
+
+    @abstractmethod
+    def get_number_already_rated_images(self):
+        pass
+
+    @abstractmethod
+    def get_already_rated_image_by_row_num(self, row_num):
+        pass
+
 
 class SqliteRepository(Repository):
     def __init__(self, config: dict) -> None:
@@ -47,12 +71,14 @@ class SqliteRepository(Repository):
         )''')
 
     def save_choice(self, choice: Choice) -> None:
-        first_image_id = self.__read_image_id(choice.first)
-        second_image_id = self.__read_image_id(choice.second)
+        # first_image_id = self.__read_image_id(choice.first)
+        # second_image_id = self.__read_image_id(choice.second)
         self.cursor.execute('INSERT INTO choices (provided_at, answered_at, first, second) VALUES (?, ?, ?, ?)',
-                            (choice.provided, choice.answered, first_image_id, second_image_id))
-        self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (first_image_id, ))
-        self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (second_image_id, ))
+                            (choice.provided, choice.answered, choice.first, choice.second))
+        # self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (first_image_id, ))
+        # self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (second_image_id, ))
+        self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (choice.first, ))
+        self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (choice.second, ))
         self.con.commit()
 
     def __read_image_id(self, filename) -> int:
@@ -62,3 +88,41 @@ class SqliteRepository(Repository):
     def get_random_image(self) -> (int, str):
         self.cursor.execute('SELECT id, filename FROM images WHERE downloaded = 1 ORDER BY RANDOM() LIMIT 10')
         return self.cursor.fetchone()[0], self.cursor.fetchone()[1]
+
+    def get_total_number_images(self) -> int:
+        self.cursor.execute('SELECT count(id) FROM images WHERE downloaded = 1')
+        return self.cursor.fetchone()[0]
+
+    def get_number_not_yet_rated_images(self) -> int:
+        self.cursor.execute('SELECT count(id) FROM images WHERE downloaded = 1 AND rank = -1000')
+        return self.cursor.fetchone()[0]
+
+    def get_not_yet_rated_image_by_row_num(self, row_num) -> (int, str):
+        print(f'row_num = {row_num}')
+        self.cursor.execute('SELECT id, filename FROM '
+                            '(SELECT row_number() OVER (ORDER BY id) AS row_num, id, filename '
+                            'FROM images '
+                            'WHERE downloaded = 1 AND rank = -1000) '
+                            'WHERE row_num = ?', (row_num, ))
+        row = self.cursor.fetchone()
+        print(f'row = {row}')
+        return row[0], row[1]
+
+    def set_image_as_rated_by(self, id) -> None:
+        self.cursor.execute('UPDATE images SET rank = 0 WHERE id = ?', (id, ))
+        self.con.commit()
+
+    def get_number_already_rated_images(self):
+        self.cursor.execute('SELECT count(id) FROM images WHERE rank > -1000')
+        return self.cursor.fetchone()[0]
+
+    def get_already_rated_image_by_row_num(self, row_num):
+        print(f'row_num = {row_num}')
+        self.cursor.execute('SELECT id, filename FROM '
+                            '(SELECT row_number() OVER (order by rank) AS row_num, id, filename '
+                            'FROM images '
+                            'WHERE downloaded = 1 AND rank > -1000) '
+                            'WHERE row_num = ?', (row_num, ))
+        row = self.cursor.fetchone()
+        print(f'row = {row}')
+        return row[0], row[1]
