@@ -34,6 +34,7 @@ entity images {
     width: integer
     height: integer
     filename: varchar(1000)
+    rank: integer
 }
 
 entity documents_to_images {
@@ -54,7 +55,15 @@ entity documents_to_categories {
     --
     * document_id: UUID <<FK>>
     * category_id: UUID <<FK>>
+}
 
+entity choices {
+    id: UUID <<generated>>
+    --
+    * first: UUID <<FK>>
+    * second: UUID <<FK>>
+    * answered_at: timestamp
+    provided_at: timestamp
 }
 
 documents ||--o{ documents_to_links
@@ -63,5 +72,7 @@ documents ||--o{ documents_to_images
 documents_to_images }|--|| images
 documents ||-o{ documents_to_categories
 documents_to_categories }|--|| categories
+images ||-o{ choices
+images ||-o{ choices
 
 @enduml

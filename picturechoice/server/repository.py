@@ -51,6 +51,8 @@ class SqliteRepository(Repository):
         second_image_id = self.__read_image_id(choice.second)
         self.cursor.execute('INSERT INTO choices (provided_at, answered_at, first, second) VALUES (?, ?, ?, ?)',
                             (choice.provided, choice.answered, first_image_id, second_image_id))
+        self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (first_image_id, ))
+        self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (second_image_id, ))
         self.con.commit()
 
     def __read_image_id(self, filename) -> int:
