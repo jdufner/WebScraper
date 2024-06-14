@@ -71,12 +71,8 @@ class SqliteRepository(Repository):
         )''')
 
     def save_choice(self, choice: Choice) -> None:
-        # first_image_id = self.__read_image_id(choice.first)
-        # second_image_id = self.__read_image_id(choice.second)
         self.cursor.execute('INSERT INTO choices (provided_at, answered_at, first, second) VALUES (?, ?, ?, ?)',
                             (choice.provided, choice.answered, choice.first, choice.second))
-        # self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (first_image_id, ))
-        # self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (second_image_id, ))
         self.cursor.execute('UPDATE images SET rank = rank + 1 WHERE id = ?', (choice.first, ))
         self.cursor.execute('UPDATE images SET rank = rank - 1 WHERE id = ?', (choice.second, ))
         self.con.commit()
